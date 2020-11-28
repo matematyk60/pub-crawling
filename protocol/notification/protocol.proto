@@ -37,7 +37,7 @@ message EntityMatch {
 message CrawlSuccess {
     required string requestId = 1;
     repeated string urls = 2;
-    required EntityMatch foundEntities = 3;
+    repeated EntityMatch foundEntities = 3;
 }
 
 message CrawlFailure {
