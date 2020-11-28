@@ -17,6 +17,7 @@ message Crawl {
     required string requestId = 1;
     required string url = 2;
     optional Query query = 3;
+    required string jobId = 4;
 }
 
 message Request {
