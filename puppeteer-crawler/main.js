@@ -28,47 +28,76 @@ protobuf.load("../protocol/notification/protocol.proto", function (err, root) {
 
   const producer = new kafka.Producer(kafkaClient);
 
-  consumer.on("message", function (message) {
-    const request = Request.decode(message.value);
+  producer.on("ready", function () {
+    consumer.on("message", function (message) {
+      const request = Request.decode(message.value);
 
-    redisClient.get("crawling-config", function (err, rawConfig) {
-      if (err) throw err;
+      redisClient.get("crawling-config", function (err, rawConfig) {
+        if (err) throw err;
 
-      const config = JSON.parse(rawConfig);
-      const url = request.crawl.url;
+        const config = JSON.parse(rawConfig);
+        const url = request.crawl.url;
 
-      (async () => {
-        const browser = await puppeteer.launch({});
-        const page = await browser.newPage();
+        (async () => {
+          const browser = await puppeteer.launch({});
+          const page = await browser.newPage();
 
-        await page.goto(url, { waitUntil: "load" });
+          await page.goto(url, { waitUntil: "load" });
 
-        const [links, content] = await page.evaluate(() => {
-          let links = [];
-          let l = document.links;
+          const [links, content] = await page.evaluate(() => {
+            let links = [];
+            let l = document.links;
 
-          for (var i = 0; i < l.length; i++) {
-            links.push(l[i].href);
-          }
+            for (var i = 0; i < l.length; i++) {
+              links.push(l[i].href);
+            }
 
-          const text = document.body.textContent.toString();
+            const text = document.body.textContent.toString();
 
-          return [Array.from(new Set(links)), text];
-        });
+            return [Array.from(new Set(links)), text];
+          });
 
-        config["namedEntities"].map((entity) => {
-          console.log(content);
-          const regex = new RegExp(entity.regex, "g");
-          const matches = [...content.matchAll(regex)];
-          // .map((m) => m[0]);
+          const entityMatches = config["namedEntities"].map((entity) => {
+            const regex = new RegExp(entity.regex, "g");
+            const matches = [...content.matchAll(regex)];
 
-          console.log(matches);
+            return matches.map((m) => ({
+              entityId: entity.entityId,
+              value: m[0],
+              count: 1,
+            }));
+          });
 
-          return matches;
-        });
+          const matches = [].concat.apply([], entityMatches);
 
-        await browser.close();
-      })();
+          let response = Response.create({
+            success: {
+              requestId: request.crawl.requestId,
+              urls: links,
+              foundEntities: matches,
+            },
+          });
+
+          console.log(response);
+
+          let responseBytes = Response.encode(response);
+
+          producer.send(
+            [
+              {
+                topic: "crawler-responses",
+                messages: responseBytes,
+              },
+            ],
+            function (err, data) {
+              if (err) throw err;
+              console.log("Pushed response to kafka.");
+            }
+          );
+
+          await browser.close();
+        })();
+      });
     });
   });
 });
