@@ -26,6 +26,8 @@ protobuf.load("../protocol/notification/protocol.proto", function (err, root) {
     }
   );
 
+  const producer = new kafka.Producer(kafkaClient);
+
   consumer.on("message", function (message) {
     const request = Request.decode(message.value);
 

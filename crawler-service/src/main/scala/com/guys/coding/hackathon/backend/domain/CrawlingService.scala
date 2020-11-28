@@ -126,15 +126,28 @@ object CrawlingService {
       config.namedEntities.flatMap { entity =>
         val regex = entity.regex.r
 
-        regex.findAllIn(htmlText).toList.map { m =>
-          EntityMatch(
-            entityId = entity.entityId,
-            value = m,
-            count = 1 // TODO: groupby?
-          )
-        }
+        regex
+          .findAllIn(htmlText)
+          .toList
+          .map { m =>
+            EntityMatch(
+              entityId = entity.entityId,
+              value = m,
+              count = 1
+            )
+          }
+          .groupBy(e => (e.entityId, e.value.toLowerCase()))
+          .map {
+            case ((entityId, value), entities) =>
+              EntityMatch(
+                entityId = entityId,
+                value = value,
+                count = entities.size
+              )
+
+          }
       }
     }
-  }
 
+  }
 }
