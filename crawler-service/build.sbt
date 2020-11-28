@@ -26,4 +26,7 @@ lazy val `crawler-service` =
     )
     .settings(protoSettings: _*)
 
-PB.protoSources in Compile := Seq(baseDirectory.value / ".." / "protocol")
+PB.protoSources in Compile := Seq(
+  baseDirectory.value / "src" / "main" / "protobuf",
+  baseDirectory.value / ".." / "protocol"
+)

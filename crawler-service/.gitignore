@@ -11,3 +11,5 @@ sbt-cache/
 .private/
 metals.sbt
 .project
+protobufs/
+generated/

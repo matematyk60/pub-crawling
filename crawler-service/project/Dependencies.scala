@@ -30,6 +30,7 @@ object Dependencies {
 
   private val grpcDependencies = Seq(
     "io.grpc"              % "grpc-netty"            % grpcNettyVersion,
+    "com.thesamet.scalapb" %% "scalapb-runtime"      % scalapb.compiler.Version.scalapbVersion % "protobuf",
     "com.thesamet.scalapb" %% "scalapb-runtime-grpc" % grpcRuntimeVersion
   )
 

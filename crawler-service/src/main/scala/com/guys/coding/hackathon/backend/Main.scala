@@ -9,7 +9,9 @@ import scala.concurrent.ExecutionContext.Implicits.global
 object Main extends IOApp {
 
   implicit private val logger: Logger[IO] = new ScalaLoggingLogger
-  val app                                 = new Application(ConfigValues(ConfigFactory.load("app.conf")))
+
+  val app = new Application(ConfigValues(ConfigFactory.load("app.conf")))
+
   override def run(args: List[String]): IO[ExitCode] =
     IO.asyncF(_ => app.start())
 

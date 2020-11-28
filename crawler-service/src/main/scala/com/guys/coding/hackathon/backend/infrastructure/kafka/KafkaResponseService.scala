@@ -26,3 +26,14 @@ class KafkaResponseService(topic: String, producer: KafkaProducer[IO, String, Ar
       case Response.Is.Failure(failure) => failure.requestId
     }
 }
+
+object KafkaResponseService {
+  def producerSettings(bootstrapServers: String): ProducerSettings[IO, String, Array[Byte]] =
+    ProducerSettings
+      .apply[IO, String, Array[Byte]](
+        Serializer.string[IO],
+        Serializer.identity[IO]
+      )
+      .withBootstrapServers(bootstrapServers)
+      .withAcks(Acks.All)
+}

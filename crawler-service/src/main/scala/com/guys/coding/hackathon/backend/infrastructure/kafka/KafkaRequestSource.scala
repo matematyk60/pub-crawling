@@ -19,7 +19,7 @@ class KafkaRequestSource(groupId: String, clientId: String, bootstrapServers: St
   private val settings =
     ConsumerSettings
       .apply(
-        Deserializer.string[IO],
+        Deserializer.identity[IO],
         Deserializer.identity[IO]
       )
       .withBootstrapServers(bootstrapServers)

@@ -1,0 +1,13 @@
+syntax = "proto2";
+package com.guys;
+import "scalapb/scalapb.proto";
+
+
+option (scalapb.options) = {
+  scope: PACKAGE
+  flat_package: true
+  lenses: false
+  retain_source_code_info: true
+  no_default_values_in_constructor: true
+  preserve_unknown_fields: false
+};
