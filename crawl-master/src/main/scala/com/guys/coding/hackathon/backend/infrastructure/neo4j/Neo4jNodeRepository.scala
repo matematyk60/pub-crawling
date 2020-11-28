@@ -36,10 +36,11 @@ class Neo4jNodeRepository(session: Session[IO]) {
    * */
 
   def insertNode(id: JobId, jobDepth: Int, entityId: EntityId, entityValue: EntityValue): IO[Unit] =
-    c"""MERGE(e:Entity{entityId:${entityId.value}})
-      ON CREATE SET e = {jobId:${id.value},entityId: ${entityId.value}, entityValue: ${entityValue.value}, jobDepth: ${jobDepth}};
-   """.query[Unit].single(session)
-  // c"create(e:Entity{jobId:${id.value},entityId: ${entityId.value}, entityValue: ${entityValue.value}});".query[Unit].single(session)
+    // c"create(e:Entity{jobId:${id.value},jobDepth: ${jobDepth}, entityId: ${entityId.value}, entityValue: ${entityValue.value}});".query[Unit].single(session)
+    c"""MERGE(e:Entity{entityValue:${entityValue.value}})
+     ON CREATE SET e = {jobId:${id.value},entityId: ${entityId.value}, entityValue: ${entityValue.value}, jobDepth: ${jobDepth}}
+     ON MATCH SET e = {jobId:${id.value},entityId: ${entityId.value}, entityValue: ${entityValue.value}, jobDepth: ${jobDepth}};
+  """.query[Unit].single(session)
 
   def saveEdge(from: JobId, to: NonEmptyList[(EntityId, EntityValue)], urls: List[String]): IO[Unit] = {
     to.traverse {
@@ -62,7 +63,7 @@ class Neo4jNodeRepository(session: Session[IO]) {
       List(
         depth.map(d => c"depth: $d"),
         entityId.map(d => c"entityId: ${d.value}")
-      ).flatten.reduceOption(_ + c", " + _).map(c":{" + _ + c"}").getOrElse(c"")
+      ).flatten.reduceOption(_ + c", " + _).map(c"{" + _ + c"}").getOrElse(c"")
 
     (c"match (j:Entity) -[r:coexists]->(e:Entity" + filters + c") return j.jobId as startJobId,j.entityValue as startValue,e.entityId,e.entityValue,r.counter skip $skip limit $limit")
       .query[TableRow]
