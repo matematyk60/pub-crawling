@@ -47,7 +47,14 @@ protobuf.load(protoPath, function (err, root) {
 
         (async () => {
           try {
-            const browser = await puppeteer.launch({});
+            const browser = await puppeteer.launch({
+              headless: true,
+              args: [
+                "--disable-dev-shm-usage",
+                "--disable-web-security",
+                "--no-sandbox",
+              ],
+            });
             const page = await browser.newPage();
 
             await page.goto(url, { waitUntil: "load" });
