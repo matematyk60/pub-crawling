@@ -1,0 +1,91 @@
+* now
+
+#+begin_src  scala
+  case class Job( // 1 st reqiest / name
+      id: JobId,
+      parentJob:Option[JobId],
+      jobDepth:Int,
+      name: String,
+      startTime: ZonedDateTime
+      operator: Operator,
+      phrases: List[String],
+  )
+
+  case class Request( // iphone, tanio,  //
+      requestId: RequestId,
+      url: String,
+      parentRequest: Option[RequestId],
+      depth:Int,
+      jobId: JobId,
+      startTime: ZonedDateTime
+  )
+
+
+
+
+//tabelka 1
+class EntityResults(
+  job:JobId,
+  entitiyId:EntityId, // type
+  entitiyValue:EntityValue, // value
+  count:Int //incremented
+)
+
+
+
+// Neo4j Ex 1
+
+case class JobNode(
+  queryRepr:String,
+  jobId:JobId,
+)
+
+case class JobEntityEdge( // Job -> Entiy
+  urls:List[String],
+  count:Int,
+)
+
+
+case class CoocurrenceEdge( // Entity <-> Entiy
+  urls:List[String],
+  count:Int,
+)
+
+case class  EntityNode(arg: Type) // creates job nod
+#+end_src
+
+* neo4j 2
+#+begin_src scala
+// Neo4j Ex 1
+
+case class EntityNode(
+    entityId: String, //  albo found albo Query
+    entityValue: String, //repr
+
+    // non-leaf
+    jobId: Option[JobId],
+    jobStart: Option[ZonedDateTime]
+)
+
+case class EntityEndge( // Entity -> Entiy
+    urls: List[String],
+    count: Int
+)
+
+#+end_src
+
+
+#+begin_src protobuf
+
+message CrawlSuccess {
+    required string requestId = 1; // get Job id by this from doobie reques t reopo
+    repeated string urls = 2;
+    repeated EntityMatch foundEntities = 3;
+}
+
+message EntityMatch {
+    required string entityId = 1;
+    required string value = 2;
+    required string count = 3; // 1
+}
+#+end_src
