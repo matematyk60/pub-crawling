@@ -3,10 +3,12 @@ package com.guys.coding.hackathon.backend.app
 import com.guys.coding.hackathon.backend.infrastructure.kafka.KafkaSource
 import cats.effect.Concurrent
 import hero.common.logging.Logger
-import cats.syntax.flatMap.toFlatMapOps
 import com.guys.coding.hackathon.proto.notifcation.Request
+import com.guys.coding.hackathon.proto.notifcation.CrawlSuccess
 import com.guys.coding.hackathon.proto.notifcation.Response
 import hero.common.fs2.StreamUtils.Implicits.StreamExt
+import cats.syntax.flatMap.toFlatMapOps
+import cats.syntax.functor.toFunctorOps
 import scala.concurrent.duration._
 import cats.effect.Timer
 import org.http4s._
@@ -75,15 +77,23 @@ object RequestProcessor extends LoggingSupport {
             .get()
             .flatMap {
               case Some(config) =>
-                CrawlingService.crawl[F](crawl.requestId, crawl.query, crawl.url, config).flatMap {
-                  case Right(success) =>
-                    pprintln(success)
-                    ResponseService[F].send(Response(Response.Is.Success(success)))
+                val response =
+                  if (config.discardedJobs.contains(crawl.jobId)) {
+                    F.pure(Response(Response.Is.Success(CrawlSuccess(crawl.requestId, Nil, Nil))))
+                  } else {
 
-                  case Left(failure) =>
-                    pprintln(failure)
-                    ResponseService[F].send(Response(Response.Is.Failure(failure)))
-                }
+                    CrawlingService.crawl[F](crawl.requestId, crawl.query, crawl.url, config).map {
+                      case Right(success) =>
+                        pprintln(success)
+                        Response(Response.Is.Success(success))
+
+                      case Left(failure) =>
+                        pprintln(failure)
+                        Response(Response.Is.Failure(failure))
+                    }
+                  }
+
+                response.flatMap(ResponseService[F].send)
 
               case None =>
                 throw new IllegalStateException("Crawling config not found.")

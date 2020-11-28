@@ -65,7 +65,7 @@ object CrawlingService {
   }
 
   // TODO: filter out 49.99
-  // TODO: handle local links       
+  // TODO: handle local links
   // TODO: unify domain case        (master?)
   // TODO: unify http / https / www (master?)
 
@@ -83,8 +83,20 @@ object CrawlingService {
     if (url.endsWith("/")) url.init
     else url
 
-  // TODO: implement
-  private def findEntities[F[_]: Applicative](html: String, config: CrawlingConfig): F[List[EntityMatch]] =
-    F.pure(Nil)
+  private def findEntities[F[_]: Applicative](html: String, config: CrawlingConfig): F[List[EntityMatch]] = {
+    F.pure {
+      config.namedEntities.flatMap { entity =>
+        val regex = entity.regex.r
+
+        regex.findAllIn(html).toList.map { m =>
+          EntityMatch(
+            entityId = entity.entityId,
+            value = m,
+            count = 1 // TODO: groupby?
+          )
+        }
+      }
+    }
+  }
 
 }
