@@ -68,7 +68,7 @@ object DoobieRequestRepository {
       )
 
     def jobsRequests(j: JobId) =
-      sql"SELECT request_id,url, parent_request_id, job_id,operator,phrases,start_time FROM requests where job_id = ${j.value}"
+      sql"SELECT request_id,url, parent_request_id, depth,job_id,start_time FROM requests where job_id = ${j.value}"
         .query[(String, String, Option[String], Int, String, Timestamp)]
         .map(makeRequest.tupled)
 
@@ -81,18 +81,6 @@ object DoobieRequestRepository {
       sql"SELECT request_id, url,parent_request_id, depth,job_id,start_time FROM requests where request_id = ${id.value}"
         .query[(String, String, Option[String], Int, String, Timestamp)]
         .map(makeRequest.tupled)
-  }
-
-  val operatorToString: Operator => String = {
-    case Operator.AND             => "and"
-    case Operator.OR              => "or"
-    case Operator.Unrecognized(e) => throw new IllegalArgumentException(s"Unrecognised operator proto $e")
-  }
-
-  val operatorFromString: String => Operator = {
-    case "and" => Operator.AND
-    case "or"  => Operator.OR
-    case other => throw new IllegalArgumentException(s"Unrecognised operator string $other")
   }
 
   case class Request(

@@ -56,9 +56,9 @@ object DoobieJobRepository {
         |    parent_job_id      VARCHAR,
         |    job_depth          INTEGER NOT NULL,
         |    name               TEXT NOT NULL,
-        |    start_time         TIMESTAMP NOT NULL
+        |    start_time         TIMESTAMP NOT NULL,
         |    operator           VARCHAR NOT NULL,
-        |    phrases            VARCHAR[] NOT NULL,
+        |    phrases            VARCHAR[] NOT NULL
         |);""".stripMargin.update
 
     def insertUser(job: Job) =
