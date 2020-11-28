@@ -9,8 +9,17 @@ import io.circe.generic.auto._
 import sangria.marshalling.circe._
 import com.guys.coding.hackathon.backend.domain.ExampleService
 import cats.effect.IO
+import com.guys.coding.hackathon.backend.app.CrawlingService
+import com.guys.coding.hackathon.backend.infrastructure.KafkaRequestService
+import hero.common.util.IdProvider
+import hero.common.util.time.TimeUtils.TimeProvider
 
-class ExampleMutation(exampleService: ExampleService[IO]) extends MutationHolder {
+class ExampleMutation(
+    implicit exampleService: ExampleService[IO],
+    idProvider: IdProvider[IO],
+    timeProvider: TimeProvider[IO],
+    kafkaRequestService: KafkaRequestService[IO]
+) extends MutationHolder {
 
   import ExampleTypes._
 
@@ -28,6 +37,20 @@ class ExampleMutation(exampleService: ExampleService[IO]) extends MutationHolder
             .unsafeToFuture()
 
         }
-      )
+      ), {
+        val phrasesArg  = Argument("phrases", ListInputType(StringType))
+        val operatorArg = Argument("operator", StringType)
+        Field(
+          "startCrawling",
+          StringType,
+          arguments = phrasesArg :: operatorArg :: Nil,
+          resolve = c => {
+            CrawlingService
+              .startFromPhrases[IO](c.arg(phrasesArg).toList, c.arg(operatorArg))
+              .map(show => "...")
+              .unsafeToFuture()
+          }
+        )
+      }
     )
 }

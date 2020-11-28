@@ -14,7 +14,7 @@ import cats.arrow.FunctionK
 import cats.effect.ContextShift
 import cats.effect.IO
 import com.guys.coding.hackathon.backend.ConfigValues.PostgresConfig
-import com.guys.coding.hackathon.backend.infrastructure.postgres.DoobieExampleRepository
+import com.guys.coding.hackathon.backend.infrastructure.postgres.{DoobieJobRepository, DoobieRequestRepository}
 import com.typesafe.config.Config
 import com.typesafe.config.ConfigFactory
 import hero.common.util.time.TimeUtils.TimeProvider
@@ -43,14 +43,17 @@ trait PostgresSpec extends AnyFlatSpec with BeforeAndAfterAll {
   }
 
   override def beforeAll(): Unit = {
+    val createTables = for {
+      _ <- DoobieJobRepository.Statements.createTable.run
+      _ <- DoobieRequestRepository.Statements.createTable.run
+    } yield ()
+
     val dropTables =
       for {
-        _ <- sql"DROP TABLE IF EXISTS users".update.run
+        _ <- sql"DROP TABLE IF EXISTS jobs".update.run
+        _ <- sql"DROP TABLE IF EXISTS requests".update.run
       } yield ()
 
-    (
-      dropTables.transact(transactor) *>
-        transactor.trans.apply(DoobieExampleRepository.Statements.createTable.run)
-    ).void.unsafeRunSync()
+    (dropTables.transact(transactor) *> transactor.trans.apply(createTables)).void.unsafeRunSync()
   }
 }

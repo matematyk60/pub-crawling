@@ -6,8 +6,10 @@ import com.guys.coding.hackathon.backend.domain.TokenService
 import com.guys.coding.hackathon.backend.domain.admin.AuthenticatedAdmin
 
 import scala.concurrent.{ExecutionContext, Future}
+import com.guys.coding.hackathon.backend.Services
 
 case class GraphqlSecureContext(
+    services: Services,
     token: Option[Token],
     tokenService: TokenService
 )(implicit ec: ExecutionContext)
