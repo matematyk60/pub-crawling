@@ -35,6 +35,8 @@ class DatabaseTest extends AnyFlatSpec with IOChecker with PostgresSpec {
 
   it should "have correct query" in {
     check(RequestS.jobsRequests(JobId("ala")))
+    check(RequestS.childRequests(RequestId("ala")))
+    check(RequestS.get(RequestId("ala")))
   }
 
 }
