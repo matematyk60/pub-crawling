@@ -1,4 +1,4 @@
-* now
+* Postgres
 
 #+begin_src  scala
   case class Job( // 1 st reqiest / name
@@ -27,34 +27,14 @@
 class EntityResults(
   job:JobId,
   entitiyId:EntityId, // type
-  entitiyValue:EntityValue, // value
+
+
+    entitiyValue:EntityValue, // value
   count:Int //incremented
 )
-
-
-
-// Neo4j Ex 1
-
-case class JobNode(
-  queryRepr:String,
-  jobId:JobId,
-)
-
-case class JobEntityEdge( // Job -> Entiy
-  urls:List[String],
-  count:Int,
-)
-
-
-case class CoocurrenceEdge( // Entity <-> Entiy
-  urls:List[String],
-  count:Int,
-)
-
-case class  EntityNode(arg: Type) // creates job nod
 #+end_src
 
-* neo4j 2
+* Neo4j 2
 #+begin_src scala
 // Neo4j Ex 1
 
@@ -88,4 +68,25 @@ message EntityMatch {
     required string value = 2;
     required string count = 3; // 1
 }
+#+end_src
+* Cypher
+#+begin_src cypher
+match path = (m)-[r]-(n) return path;
+match (m) return m;
+
+create(e:Entity{jobId:"job1",entityId: "IPHONE and Tanio", entityValue: "query"});
+
+
+
+      // BCM increment count
+
+unwind [{entityId:"phone",entitiyValue: "123123123"},{entityId:"email",entitiyValue: "ala@ola.pl"} ] as t
+with t
+match(e:Entity{jobId:"job1"})
+     merge (e)-[r:coexists]-> (to:Entity {entityId: t.entityId, entityValue:t.entitiyValue})
+     ON CREATE SET r.counter = $cnt;
+     ON MATCH SET
+     r.counter = coalesce(n.counter, 0) + $cnt;
+
+
 #+end_src

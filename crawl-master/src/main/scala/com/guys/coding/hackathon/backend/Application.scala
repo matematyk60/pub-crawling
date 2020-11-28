@@ -15,7 +15,6 @@ import hero.common.logging.slf4j.LoggingConfigurator
 import cats.effect.{IO, Resource}
 import com.guys.coding.hackathon.backend.infrastructure.KafkaRequestService
 import neotypes.{GraphDatabase, Session}
-import neotypes.cats.effect.implicits._ // Brings the implicit Async[IO] instance into the scope. // Provides the query[T] extension method.
 import neotypes.cats.effect.implicits._
 import org.neo4j.driver.AuthTokens
 import hero.common.util.LoggingExt
