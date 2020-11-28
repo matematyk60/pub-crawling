@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: backend-slave
 spec:
-  replicas: 4
+  replicas: 12
   selector:
     matchLabels:
       app: backend-slave
@@ -13,7 +13,7 @@ spec:
         app: backend-slave
     spec:
       containers:
-        - image: matematyk60/crawler-service:0.5
+        - image: matematyk60/crawler-service:0.7
           name: backend-slave
           env:
             - name: REDIS_PORT
