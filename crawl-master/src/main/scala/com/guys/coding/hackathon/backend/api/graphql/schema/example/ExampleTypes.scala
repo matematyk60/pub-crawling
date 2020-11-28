@@ -7,6 +7,10 @@ import com.guys.coding.hackathon.backend.domain.{JobId, RequestId}
 import com.guys.coding.hackathon.backend.infrastructure.postgres.DoobieJobRepository.Job
 import hero.common.util.time.TimeUtils
 import java.time.ZonedDateTime
+import com.guys.coding.hackathon.backend.infrastructure.postgres.DoobieRequestRepository.Request
+import hero.common.sangria.ProtoEnumType
+import com.guys.coding.hackathon.proto.notifcation.Query.Operator
+import com.guys.coding.hackathon.backend.infrastructure.postgres.DoobieRequestRepository
 
 object ExampleTypes {
   case class ExampleInput(id: String, value: String)
@@ -22,6 +26,46 @@ object ExampleTypes {
   implicit val RequestIdScalar =
     ScalarAlias[RequestId, String](StringType, _.value, (RequestId.apply _).andThen(Right(_)))
 
-  implicit val UserType = deriveObjectType[GraphqlSecureContext, Job]()
+  implicit val OperatorEnumType = ProtoEnumType(Operator, "Operator")
+
+  implicit val RequestType: ObjectType[GraphqlSecureContext, Request] = deriveObjectType[GraphqlSecureContext, Request](
+    AddFields(
+      Field(
+        "childRequests",
+        ListType(RequestType),
+        resolve = ctx =>
+          ctx.ctx.services.tx.trans
+            .apply(
+              DoobieRequestRepository.childRequest(ctx.value.requestId)
+            )
+            .unsafeToFuture()
+      )
+    )
+  )
+
+  implicit val JobType = deriveObjectType[GraphqlSecureContext, Job](
+    AddFields(
+      Field(
+        "allRequests",
+        ListType(RequestType),
+        resolve = ctx =>
+          ctx.ctx.services.tx.trans
+            .apply(
+              DoobieRequestRepository.jobRequests(ctx.value.id)
+            )
+            .unsafeToFuture()
+      ),
+      Field(
+        "initialRequest",
+        OptionType(RequestType),
+        resolve = ctx =>
+          ctx.ctx.services.tx.trans
+            .apply(
+              DoobieRequestRepository.get(ctx.value.initialRequestId)
+            )
+            .unsafeToFuture()
+      )
+    )
+  )
 
 }
