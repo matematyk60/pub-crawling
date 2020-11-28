@@ -8,7 +8,7 @@ import sangria.schema.ObjectType
 class Query(services: Services) {
 
   private val queryHolders = List[QueryHolder](
-    new JobQuery(services.tx)
+    new JobQuery(services.enttityService.neo4j, services.tx)
   )
 
   val QueryType = ObjectType(

@@ -14,11 +14,14 @@ trait EntityService[F[_]] {
 
   def saveReturning(jobId: JobId, entries: Seq[EntityMatch], urls: Seq[String]): F[Unit]
   def insertQueryNode(id: JobId, jobDepth: Int, entityValue: EntityValue): F[Unit]
+  def neo4j: Neo4jNodeRepository
 }
 
 object EntityService {
 
   def instance(neo4J: Neo4jNodeRepository): EntityService[IO] = new EntityService[IO] {
+
+    override def neo4j: Neo4jNodeRepository = neo4J
 
     def saveReturning(jobId: JobId, entries: Seq[EntityMatch], urls: Seq[String]) = {
       val optTo = entries.toList.map(m => (EntityId(m.entityId), EntityValue(m.value))) |> (NonEmptyList.fromList _)

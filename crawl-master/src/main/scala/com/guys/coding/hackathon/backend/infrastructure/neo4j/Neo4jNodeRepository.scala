@@ -56,10 +56,18 @@ class Neo4jNodeRepository(session: Session[IO]) {
 
   }
 
-  def getTable(skip: Int, limit: Int): IO[List[Neo4jNodeRepository.TableRow]] =
-    c"match (j:Entity) -[r:coexists]->(e) return j.jobId as startJobId,j.entityValue as startValue,e.entityId,e.entityValue,r.counter skip $skip limit $limit"
+  def getTable(entityId: Option[EntityId], depth: Option[Int], skip: Int, limit: Int): IO[List[Neo4jNodeRepository.TableRow]] = {
+
+    val filters =
+      List(
+        depth.map(d => c"depth: $d"),
+        entityId.map(d => c"entityId: ${d.value}")
+      ).flatten.reduceOption(_ + c", " + _).map(c":{" + _ + c"}").getOrElse(c"")
+
+    (c"match (j:Entity) -[r:coexists]->(e:Entity" + filters + c") return j.jobId as startJobId,j.entityValue as startValue,e.entityId,e.entityValue,r.counter skip $skip limit $limit")
       .query[TableRow]
       .list(session)
+  }
 
 // match (j:Entity) -[r:coexists]->(e:Entity{entityId:"email"}) return j.jobId as startJobId,j.entityValue as startValue,e.entityId,e.entityValue as foundEntityValue,r.counter
 

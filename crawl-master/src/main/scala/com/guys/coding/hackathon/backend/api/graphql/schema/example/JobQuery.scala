@@ -7,10 +7,12 @@ import com.guys.coding.hackathon.backend.domain.JobId
 import com.guys.coding.hackathon.backend.infrastructure.postgres.DoobieJobRepository
 import doobie.util.transactor.Transactor
 import sangria.schema._
+import com.guys.coding.hackathon.backend.infrastructure.neo4j.Neo4jNodeRepository
+import com.guys.coding.hackathon.backend.domain.EntityId
 
-class JobQuery(tx: Transactor[IO]) extends QueryHolder {
+class JobQuery(neo4jRepo: Neo4jNodeRepository, tx: Transactor[IO]) extends QueryHolder {
 
-  import ExampleTypes.JobType
+  import ExampleTypes.{JobType, TableRowType}
   val JobIdArg = Argument("jobId", StringType)
 
   override def queryFields(): List[Field[GraphqlSecureContext, Unit]] =
@@ -39,6 +41,30 @@ class JobQuery(tx: Transactor[IO]) extends QueryHolder {
             )
             .unsafeToFuture()
         }
-      )
+      ), {
+
+        val EntityIdArg = Argument("entityId", OptionInputType(StringType))
+        val DepthArg    = Argument("jobDepth", OptionInputType(IntType))
+        val LimitArg    = Argument("limit", IntType)
+        val OffsetArg   = Argument("offset", IntType)
+
+        Field(
+          "entityTable",
+          ListType(TableRowType),
+          arguments = List(EntityIdArg, DepthArg, OffsetArg, LimitArg),
+          resolve = ctx => // ctx.ctx.authorizedF { _ =>
+          {
+
+            neo4jRepo
+              .getTable(
+                ctx.arg(EntityIdArg).map(EntityId),
+                ctx.arg(DepthArg),
+                skip = ctx.arg(OffsetArg),
+                limit = ctx.arg(LimitArg)
+              )
+              .unsafeToFuture()
+          }
+        )
+      }
     )
 }

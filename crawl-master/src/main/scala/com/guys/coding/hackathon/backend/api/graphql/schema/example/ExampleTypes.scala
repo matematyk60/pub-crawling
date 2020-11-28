@@ -11,6 +11,7 @@ import com.guys.coding.hackathon.backend.infrastructure.postgres.DoobieRequestRe
 import hero.common.sangria.ProtoEnumType
 import com.guys.coding.hackathon.proto.notifcation.Query.Operator
 import com.guys.coding.hackathon.backend.infrastructure.postgres.DoobieRequestRepository
+import com.guys.coding.hackathon.backend.infrastructure.neo4j.Neo4jNodeRepository.TableRow
 
 object ExampleTypes {
   case class ExampleInput(id: String, value: String)
@@ -57,5 +58,7 @@ object ExampleTypes {
       )
     )
   )
+
+  implicit val TableRowType = deriveObjectType[GraphqlSecureContext, TableRow]()
 
 }
