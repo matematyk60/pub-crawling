@@ -12,6 +12,7 @@ import cats.syntax.functor.toFunctorOps
 import scala.concurrent.duration._
 import cats.effect.Timer
 import org.http4s._
+import cats.syntax.applicativeError._
 import org.http4s.client.Client
 import hero.common.util.time.TimeUtils.TimeProvider
 import hero.common.logging.LoggingSupport
@@ -23,6 +24,7 @@ import com.guys.coding.hackathon.backend.domain.ConfigService
 import com.guys.coding.hackathon.backend.domain.CrawlingService
 import com.guys.coding.hackathon.backend.domain.ResponseService
 import pprint.pprintln
+import com.guys.coding.hackathon.proto.notifcation.CrawlFailure
 
 object RequestProcessor extends LoggingSupport {
 
@@ -82,18 +84,29 @@ object RequestProcessor extends LoggingSupport {
                     F.pure(Response(Response.Is.Success(CrawlSuccess(crawl.requestId, Nil, Nil))))
                   } else {
 
-                    CrawlingService.crawl[F](crawl.requestId, crawl.query, crawl.url, config).map {
-                      case Right(success) =>
-                        pprintln(success)
-                        Response(Response.Is.Success(success))
+                    CrawlingService
+                      .crawl[F](crawl.requestId, crawl.query, crawl.url, config)
+                      .map {
+                        case Right(success) =>
+                          pprintln(s"SUCCESS: ${success.urls.size} urls, ${success.foundEntities.size} entities.")
+                          Response(Response.Is.Success(success))
 
-                      case Left(failure) =>
-                        pprintln(failure)
-                        Response(Response.Is.Failure(failure))
-                    }
+                        case Left(failure) =>
+                          pprintln("HANDLED FAILURE")
+                          Response(Response.Is.Failure(failure))
+                      }
+                      .recoverWith { ex =>
+                        Logger[F]
+                          .error("Error while crawling", ex)
+                          .as(Response(Response.Is.Failure(CrawlFailure(crawl.requestId))))
+                      }
                   }
 
-                response.flatMap(ResponseService[F].send)
+                response
+                  .flatMap(ResponseService[F].send)
+                  .recoverWith { ex =>
+                    Logger[F].error("Error while sending response", ex)
+                  }
 
               case None =>
                 throw new IllegalStateException("Crawling config not found.")
