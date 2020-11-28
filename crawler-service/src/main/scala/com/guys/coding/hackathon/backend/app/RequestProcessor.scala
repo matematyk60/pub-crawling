@@ -34,7 +34,7 @@ object RequestProcessor extends LoggingSupport {
       KafkaSource[F, Request].source
         .map { partition =>
           partition
-            .groupWithin(1000, 3.seconds)
+            .groupWithin(100, 1.second)
             .evalMap { chunk =>
               val offset = CommittableOffsetBatch.fromFoldableMap(chunk)(_.offset)
               processEventsChunk[F](chunk.map(_.value), processSingle[F](_)) *> offset.commit
