@@ -43,5 +43,5 @@ producer.send(topic, request.SerializeToString()).get(timeout=60)
 #+end_src
 
 #+RESULTS:
-: # Out[30]:
-: : RecordMetadata(topic='crawler-requests', partition=2, topic_partition=TopicPartition(topic='crawler-requests', partition=2), offset=27, timestamp=1606600265906, checksum=1542187898, serialized_key_size=-1, serialized_value_size=50, serialized_header_size=-1)
+: # Out[31]:
+: : RecordMetadata(topic='crawler-requests', partition=3, topic_partition=TopicPartition(topic='crawler-requests', partition=3), offset=39, timestamp=1606602476022, checksum=506548486, serialized_key_size=-1, serialized_value_size=50, serialized_header_size=-1)

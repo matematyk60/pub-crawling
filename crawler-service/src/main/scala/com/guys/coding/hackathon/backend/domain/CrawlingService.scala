@@ -14,20 +14,12 @@ import com.guys.coding.hackathon.proto.notifcation.Query.Operator
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.select.Elements
-import cats.MonadError
 import cats.effect.Sync
 import hero.common.logging.Logger
 
 object CrawlingService {
 
-  private val urlRegex           = raw"""[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)""".r
   private val unwantedExtensions = Set("ico", "png", "jpg", "jpeg", "xml", "js")
-
-  // def soup(html: String) = {
-  //   val demo: Document =
-
-  //   println(demo.text())
-  // }
 
   def crawl[F[_]: Sync: Logger](requestId: String, query: Option[Query], url: String, config: CrawlingConfig)(
       implicit client: Client[F],
@@ -82,17 +74,6 @@ object CrawlingService {
   // TODO: handle local links
   // TODO: unify domain case        (master?)
   // TODO: unify http / https / www (master?)
-
-  // private def findLinksOld(html: String): List[String] = {
-  //   urlRegex
-  //     .findAllIn(html)
-  //     .map(dropLastSlash)
-  //     .map(unifyURL)
-  //     .distinct
-  //     .filterNot(url => unwantedExtensions.exists(url.endsWith))
-  //     .filterNot(_.size < 5)
-  //     .toList
-  // }
 
   private def findLinks(document: Document): List[String] = {
     val elems: Elements = document.select("a[href]");

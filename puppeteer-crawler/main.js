@@ -3,7 +3,11 @@ const kafka = require("kafka-node");
 const protobuf = require("protobufjs");
 const redis = require("redis");
 
-// let protoPath = "../protocol/notification/protocol.proto";
+const redisHost = process.env.REDIS_HOST || "redis";
+const kafkaHost = process.env.KAFKA_HOST || "kafka";
+const requestTopic = process.env.REQUEST_TOPIC || "crawler-requests";
+const responseTopic = process.env.RESPONSE_TOPIC || "crawler-responses";
+
 let protoPath = "protocol.proto";
 
 protobuf.load(protoPath, function (err, root) {
@@ -12,16 +16,16 @@ protobuf.load(protoPath, function (err, root) {
   let Request = root.lookupType("Request");
   let Response = root.lookupType("Response");
 
-  const kafkaClient = new kafka.KafkaClient();
-  const redisClient = redis.createClient((host = "redis"));
+  const kafkaClient = new kafka.KafkaClient({ kafkaHost: kafkaHost + ":9092" });
+  const redisClient = redis.createClient((host = redisHost));
 
   const consumer = new kafka.Consumer(
     kafkaClient,
     [
-      { topic: "crawler-requests", partition: 0 },
-      { topic: "crawler-requests", partition: 1 },
-      { topic: "crawler-requests", partition: 2 },
-      { topic: "crawler-requests", partition: 3 },
+      { topic: requestTopic, partition: 0 },
+      { topic: requestTopic, partition: 1 },
+      { topic: requestTopic, partition: 2 },
+      { topic: requestTopic, partition: 3 },
     ],
     {
       autoCommit: true,
@@ -89,7 +93,7 @@ protobuf.load(protoPath, function (err, root) {
             producer.send(
               [
                 {
-                  topic: "crawler-responses",
+                  topic: responseTopic,
                   messages: responseBytes,
                 },
               ],
@@ -114,7 +118,7 @@ protobuf.load(protoPath, function (err, root) {
             producer.send(
               [
                 {
-                  topic: "crawler-responses",
+                  topic: responseTopic,
                   messages: responseBytes,
                 },
               ],
