@@ -98,7 +98,7 @@ object DoobieJobRepository extends DoobieJobRepository[ConnectionIO] {
         .query[(String, Option[String], Int, String, Timestamp, String, List[String], Int)]
 
     def getJob(id: JobId) =
-      sql"SELECT id, parent_job_id, job_depth, name, start_time, operator, phrases, iterations jobs where id = ${id.value}"
+      sql"SELECT id, parent_job_id, job_depth, name, start_time, operator, phrases, iterations FROM jobs where id = ${id.value}"
         .query[(String, Option[String], Int, String, Timestamp, String, List[String], Int)]
 
   }
