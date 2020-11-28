@@ -5,6 +5,6 @@ case class CrawlingConfig(
 )
 
 case class NamedEntity(
-    name: String,
+    entityId: String,
     regex: String
 )

@@ -15,7 +15,8 @@ object Dependencies {
   val CirceVersion       = "0.13.0"
   val CirceOpticsVersion = "0.13.0"
 
-  val RedisVersion = "1.9.0"
+  val RedisVersion    = "1.9.0"
+  val Fs2KafkaVersion = "1.0.0"
 
   private val http4sDependencies = Seq(
     "org.http4s" %% "http4s-blaze-client" % Http4sVersion,
@@ -23,6 +24,7 @@ object Dependencies {
     "org.http4s" %% "http4s-circe"        % Http4sVersion,
     "org.http4s" %% "http4s-dsl"          % Http4sVersion,
     "io.circe"   %% "circe-generic"       % CirceVersion,
+    "io.circe"   %% "circe-parser"        % CirceVersion,
     "io.circe"   %% "circe-optics"        % CirceOpticsVersion
   )
 
@@ -41,14 +43,19 @@ object Dependencies {
     "com.github.etaty" %% "rediscala" % RedisVersion
   )
 
+  private val kafkaDependencies = Seq(
+    "com.github.fd4s" %% "fs2-kafka" % Fs2KafkaVersion
+  )
+
   private val testDependencies = Seq(
     "org.scalatest" %% "scalatest" % ScalaTestVersion % Test
   )
 
   val all: Seq[ModuleID] = Seq(
     http4sDependencies,
-    // grpcDependencies,
+    grpcDependencies,
     redisDependencies,
+    kafkaDependencies,
     testDependencies,
     miscDependencies
   ).flatten

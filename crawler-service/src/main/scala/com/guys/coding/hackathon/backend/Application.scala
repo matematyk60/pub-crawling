@@ -11,9 +11,9 @@ import cats.effect.Timer
 import hero.common.logging.Logger
 import hero.common.logging.slf4j.LoggingConfigurator
 import hero.common.util.LoggingExt
-import com.guys.coding.hackathon.backend.infrastructure.postgres.DoobieExampleRepository
 import redis.RedisClient
 import akka.actor.ActorSystem
+import com.guys.coding.hackathon.backend.infrastructure.redis.RedisConfigService
 
 class Application(config: ConfigValues)(
     implicit ec: ExecutionContext,
@@ -27,6 +27,8 @@ class Application(config: ConfigValues)(
   LoggingConfigurator.setLogLevel("com.guys.coding.hackathon.backend", config.app.appLogLevel)
 
   val redis = RedisClient(config.redis.host, config.redis.port)
+
+  val configService = new RedisConfigService(redis)
 
   def start()(implicit t: Timer[IO]): IO[Unit] =
     ???

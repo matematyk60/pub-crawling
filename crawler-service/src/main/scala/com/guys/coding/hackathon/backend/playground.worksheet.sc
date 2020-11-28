@@ -1,8 +1,5 @@
 import cats.effect._
 import org.http4s._
-import org.http4s.dsl.io._
-import org.http4s.implicits._
-import org.http4s.client.blaze._
 import org.http4s.client._
 import org.http4s.client.middleware.FollowRedirect
 import org.http4s.util.CaseInsensitiveString
