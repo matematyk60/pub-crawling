@@ -20,6 +20,8 @@ object Dependencies {
   val doobieVersion           = "0.9.4"
   val enumeratumDoobieVersion = "1.6.0"
 
+  val neotypesVersion = "0.15.1"
+
   private val http4sDependencies = Seq(
     "org.http4s" %% "http4s-blaze-server" % Http4sVersion,
     "org.http4s" %% "http4s-circe"        % Http4sVersion,
@@ -50,10 +52,14 @@ object Dependencies {
   )
 
   private val miscDependencies = Seq(
-    "io.codeheroes"        %% "commons-core" % CodeheroesCommonsVersion,
-    "com.github.mpilquist" %% "simulacrum"   % SimulacrumVersion,
-    "com.typesafe"         % "config"        % TypesafeConfigVersion,
-    "org.neo4j.driver" % "neo4j-java-driver" % "4.1.1"
+    "io.codeheroes"        %% "commons-core"         % CodeheroesCommonsVersion,
+    "com.github.mpilquist" %% "simulacrum"           % SimulacrumVersion,
+    "com.typesafe"         % "config"                % TypesafeConfigVersion,
+    "org.neo4j.driver"     % "neo4j-java-driver"     % "4.2.0",
+    "com.chuusai"          %% "shapeless"            % "2.3.3",
+    "com.dimafeng"         %% "neotypes"             % neotypesVersion,
+    "com.dimafeng"         %% "neotypes-cats-effect" % neotypesVersion,
+    "com.dimafeng"         %% "neotypes-cats-data"   % neotypesVersion
   )
 
   private val testDependencies = Seq(

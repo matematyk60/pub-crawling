@@ -7,6 +7,7 @@ case class ConfigValues(
     app: ApplicationConfig,
     postgres: PostgresConfig,
     // authKeys: AuthKeys,
+    neo4j: Neo4jConfig,
     raw: Config
 )
 
@@ -20,6 +21,11 @@ object ConfigValues {
       rootLogLevel = config.getString("log-level.root")
     ),
     PostgresConfig(config.getConfig("postgres")),
+    Neo4jConfig(
+      url = config.getString("neo4j.url"),
+      username = config.getString("neo4j.username"),
+      password = config.getString("neo4j.password")
+    ),
     // AuthKeys(config.getString("keys.private"), config.getString("keys.public")),
     config
   )
@@ -31,6 +37,8 @@ object ConfigValues {
       appLogLevel: String,
       rootLogLevel: String
   )
+
+  case class Neo4jConfig(url: String, username: String, password: String)
 
   case class PostgresConfig(
       host: String,
