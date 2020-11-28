@@ -1,31 +1,63 @@
 const puppeteer = require("puppeteer");
-const fs = require("fs");
+const kafka = require("kafka-node");
+const protobuf = require("protobufjs");
+const redis = require("redis");
 
-const url = "https://www.duckduckgo.com/?q=tescik";
+protobuf.load("../protocol/notification/protocol.proto", function (err, root) {
+  if (err) throw err;
 
-(async () => {
-  const browser = await puppeteer.launch({});
-  const page = await browser.newPage();
-  // await page.goto(url, { waitUntil: "networkidle2" });
-  await page.goto(url, { waitUntil: "load" });
-  // await page.goto(url, { waitUntil: "networkidle0" });
+  let Request = root.lookupType("Request");
 
-  const [links, content] = await page.evaluate(() => {
-    let links = [];
-    let l = document.links;
+  const kafkaClient = new kafka.KafkaClient();
+  const redisClient = redis.createClient();
 
-    for (var i = 0; i < l.length; i++) {
-      links.push(l[i].href);
+  const consumer = new kafka.Consumer(
+    kafkaClient,
+    [
+      { topic: "crawler-requests", partition: 0 },
+      { topic: "crawler-requests", partition: 1 },
+      { topic: "crawler-requests", partition: 2 },
+      { topic: "crawler-requests", partition: 3 },
+    ],
+    {
+      autoCommit: true,
+      encoding: "buffer",
     }
+  );
 
-    const text = document.body.textContent;
+  consumer.on("message", function (message) {
+    const request = Request.decode(message.value);
+    const config = JSON.parse(redisClient.get("crawling-config"));
+    const url = request.crawl.url;
 
-    return [Array.from(new Set(links)), text];
+    (async () => {
+      const browser = await puppeteer.launch({});
+      const page = await browser.newPage();
+
+      await page.goto(url, { waitUntil: "load" });
+
+      const [links, content] = await page.evaluate(() => {
+        let links = [];
+        let l = document.links;
+
+        for (var i = 0; i < l.length; i++) {
+          links.push(l[i].href);
+        }
+
+        const text = document.body.textContent;
+
+        return [Array.from(new Set(links)), text];
+      });
+
+      console(config["namedEntities"]);
+
+      // config["namedEntities"].map((entity) => {
+      //   const regex = new RegExp(entity.regex);
+      // });
+
+      console.log(links);
+
+      await browser.close();
+    })();
   });
-
-  console.log(links);
-  console.log(links.length);
-  // console.log(content.length);
-
-  await browser.close();
-})();
+});
