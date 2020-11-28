@@ -13,7 +13,6 @@ class Neo4jNodeRepository(session: Session[IO]) {
   // https://neotypes.github.io/neotypes/
   // NOTE: neotypes.generic is scheduled for 0.16.0, now use  neotypes.implicits.mappers.all._ instead.
 
-
   //
 
   def save(requestId: RequestId) = ???
@@ -21,10 +20,8 @@ class Neo4jNodeRepository(session: Session[IO]) {
   def getPepole(): IO[List[(String, Int)]] = "match (p:Person) return p.name, p.born limit 10".query[(String, Int)].list(session)
 
   case class Entity(
-      entityId: String, // TODO:bcm entity type
+      entityId: String, // entity type
       request: Option[RequestId]
   )
-
-
 
 }

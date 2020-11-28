@@ -9,6 +9,7 @@ import com.guys.coding.hackathon.proto.notifcation.Query.Operator
 import com.guys.coding.hackathon.backend.infrastructure.postgres.DoobieRequestRepository.Request
 import com.guys.coding.hackathon.backend.domain.RequestId
 import com.guys.coding.hackathon.backend.domain.JobId
+import com.guys.coding.hackathon.backend.infrastructure.postgres.DoobieJobRepository.Job
 
 class DatabaseTest extends AnyFlatSpec with IOChecker with PostgresSpec {
 
@@ -17,7 +18,33 @@ class DatabaseTest extends AnyFlatSpec with IOChecker with PostgresSpec {
   }
 
   it should "have correct update" in {
-    check(JobS.insertUser("id", "name", RequestId("rid"), ZonedDateTime.now()))
+    check(
+      JobS.insertUser(
+        Job(
+          JobId("id"),
+          parentJob = Some(JobId("ala")),
+          jobDepth = 1,
+          name = "dala",
+          startTime = ZonedDateTime.now(),
+          operator = Operator.AND,
+          phrases = List("ala", "makota")
+        )
+      )
+    )
+
+    check(
+      JobS.insertUser(
+        Job(
+          JobId("id"),
+          parentJob = None,
+          jobDepth = 1,
+          name = "dala",
+          startTime = ZonedDateTime.now(),
+          operator = Operator.OR,
+          phrases = Nil
+        )
+      )
+    )
   }
 
   it should "have correct query" in {
@@ -29,8 +56,8 @@ class DatabaseTest extends AnyFlatSpec with IOChecker with PostgresSpec {
   }
 
   it should "have correct update" in {
-    check(RequestS.insertRequest(Request(RequestId("da"), None, JobId("dad"), Operator.AND, List("ala", "makota"), ZonedDateTime.now())))
-    check(RequestS.insertRequest(Request(RequestId("da"), Some(RequestId("ola")), JobId("dad"), Operator.OR, List.empty, ZonedDateTime.now())))
+    check(RequestS.insertRequest(Request(RequestId("da"), "url", None, depth = 0, JobId("dad"), ZonedDateTime.now())))
+    check(RequestS.insertRequest(Request(RequestId("da"), "url", Some(RequestId("ola")), depth = 1, JobId("dad"), ZonedDateTime.now())))
   }
 
   it should "have correct query" in {
