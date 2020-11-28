@@ -13,7 +13,7 @@ import simulacrum.typeclass
 trait EntityService[F[_]] {
 
   def saveReturning(jobId: JobId, entries: Seq[EntityMatch], urls: Seq[String]): F[Unit]
-  def insertQueryNode(id: JobId, entityValue: EntityValue): F[Unit]
+  def insertQueryNode(id: JobId, jobDepth: Int, entityValue: EntityValue): F[Unit]
 }
 
 object EntityService {
@@ -25,8 +25,8 @@ object EntityService {
       optTo.traverse(to => neo4J.saveEdge(from = jobId, to = to, urls = urls.toList)).void
     }
 
-    def insertQueryNode(id: JobId, entityValue: EntityValue): IO[Unit] =
-      neo4J.insertNode(id, EntityId("query"), entityValue = entityValue)
+    def insertQueryNode(id: JobId, jobDepth: Int, entityValue: EntityValue): IO[Unit] =
+      neo4J.insertNode(id, jobDepth = jobDepth, EntityId("query"), entityValue = entityValue)
 
   }
 

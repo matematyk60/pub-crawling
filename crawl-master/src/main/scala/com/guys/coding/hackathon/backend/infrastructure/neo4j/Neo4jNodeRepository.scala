@@ -10,6 +10,7 @@ import com.guys.coding.hackathon.backend.domain.JobId
 import neotypes.Session
 import neotypes.implicits.mappers.all._
 import neotypes.implicits.syntax.cypher.neotypesSyntaxCypherStringInterpolator
+import com.guys.coding.hackathon.backend.infrastructure.neo4j.Neo4jNodeRepository.TableRow
 
 class Neo4jNodeRepository(session: Session[IO]) {
   // import com.guys.coding.hackathon.backend.infrastructure.neo4j.Neo4jNodeRepository.{enitityToMapper, EntityTo}
@@ -34,9 +35,9 @@ class Neo4jNodeRepository(session: Session[IO]) {
    * - ?? count
    * */
 
-  def insertNode(id: JobId, entityId: EntityId, entityValue: EntityValue): IO[Unit] =
-    c"""MERGE(e:Entity{jobId:${id.value}})
-      ON CREATE SET e = {jobId:${id.value},entityId: ${entityId.value}, entityValue: ${entityValue.value}};
+  def insertNode(id: JobId, jobDepth: Int, entityId: EntityId, entityValue: EntityValue): IO[Unit] =
+    c"""MERGE(e:Entity{entityId:${entityId.value}})
+      ON CREATE SET e = {jobId:${id.value},entityId: ${entityId.value}, entityValue: ${entityValue.value}, jobDepth: ${jobDepth}};
    """.query[Unit].single(session)
   // c"create(e:Entity{jobId:${id.value},entityId: ${entityId.value}, entityValue: ${entityValue.value}});".query[Unit].single(session)
 
@@ -53,20 +54,26 @@ class Neo4jNodeRepository(session: Session[IO]) {
     """.query[Unit].single(session)
     }.void
 
-    // val x = c"""
-    //   unwind ${to} as t
-    //   with t
-    //   match(e:Entity{jobId:${from.value}})
-    //       merge (e)-[r:coexists]-> (to:Entity {entityId: t.entityId, entityValue:t.entitiyValue})
-    //       ON CREATE SET r.counter = ${urls.size};
-    //       ON MATCH SET
-    //       r.counter = coalesce(n.counter, 0) + ${urls.size};
-    // """
-
   }
+
+  def getTable(skip: Int, limit: Int): IO[List[Neo4jNodeRepository.TableRow]] =
+    c"match (j:Entity) -[r:coexists]->(e) return j.jobId as startJobId,j.entityValue as startValue,e.entityId,e.entityValue,r.counter skip $skip limit $limit"
+      .query[TableRow]
+      .list(session)
+
+  // val x = c"""
+  //   unwind ${to} as t
+  //   with t
+  //   match(e:Entity{jobId:${from.value}})
+  //       merge (e)-[r:coexists]-> (to:Entity {entityId: t.entityId, entityValue:t.entitiyValue})
+  //       ON CREATE SET r.counter = ${urls.size};
+  //       ON MATCH SET
+  //       r.counter = coalesce(n.counter, 0) + ${urls.size};
+  // """
 
 }
 object Neo4jNodeRepository {
+  case class TableRow(startJobId: String, startEntityValue: String, foundEntityId: String, fountEntityValue: String, counter: Int)
 
   case class EntityNode(
       entityId: String,    //  albo found albo Query

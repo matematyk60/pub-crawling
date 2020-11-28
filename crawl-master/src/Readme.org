@@ -28,8 +28,7 @@ class EntityResults(
   job:JobId,
   entitiyId:EntityId, // type
 
-
-    entitiyValue:EntityValue, // value
+  entitiyValue:EntityValue, // value
   count:Int //incremented
 )
 #+end_src
