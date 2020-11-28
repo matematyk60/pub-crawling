@@ -1,23 +1,25 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: backend-slave
+  name: backend-slavejs
 spec:
   replicas: 4
   selector:
     matchLabels:
-      app: backend-slave
+      app: backend-slavejs
   template:
     metadata:
       labels:
-        app: backend-slave
+        app: backend-slavejs
     spec:
       containers:
-        - image: matematyk60/crawler-service:0.5
-          name: backend-slave
+        - image: porcupine96/puppeteer-crawler:0.2
+          name: backend-slavejs
           env:
             - name: REDIS_PORT
               value: "6379"
+            - name: REDIS_HOST
+              value: redis
             - name: KAFKA_HOST
               value: 10.60.5.51
             - name: KAFKA_PORT

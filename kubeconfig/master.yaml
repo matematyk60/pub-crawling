@@ -13,7 +13,7 @@ spec:
         app: backend-master
     spec:
       containers:
-        - image: matematyk60/crawl-master:0.0424
+        - image: matematyk60/crawl-master:0.0426
           name: backend-master
           env:
             - name: POSTGRES_HOST
@@ -27,7 +27,7 @@ spec:
             - name: REDIS_CONNECTION_STRING
               value: "redis://redis:6379"
             - name: KAFKA_BOOTSTRAP_SERVERS
-              value: 10.32.11.39:9092
+              value: 10.60.5.51:9092
       restartPolicy: Always
 ---
 apiVersion: v1
