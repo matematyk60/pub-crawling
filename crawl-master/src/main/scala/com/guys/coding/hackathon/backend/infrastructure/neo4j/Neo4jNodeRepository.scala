@@ -61,6 +61,8 @@ class Neo4jNodeRepository(session: Session[IO]) {
       .query[TableRow]
       .list(session)
 
+// match (j:Entity) -[r:coexists]->(e:Entity{entityId:"email"}) return j.jobId as startJobId,j.entityValue as startValue,e.entityId,e.entityValue as foundEntityValue,r.counter
+
   // val x = c"""
   //   unwind ${to} as t
   //   with t

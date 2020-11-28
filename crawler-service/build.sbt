@@ -15,9 +15,9 @@ val protoSettings = Seq(
 
 
 val dockerSettings = Seq(
-  dockerBaseImage := "openjdk:13-jdk-buster",
+  dockerBaseImage := "openjdk:13-slim",
   daemonUser in Docker := "root",
-  dockerRepository := Some("porcupine96"),
+  dockerRepository := Some("matematyk60"),
   dockerExposedPorts := Seq(8080)
 )
 

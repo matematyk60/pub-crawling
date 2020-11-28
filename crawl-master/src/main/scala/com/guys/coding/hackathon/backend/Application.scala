@@ -54,7 +54,7 @@ class Application(config: ConfigValues)(
   implicit private val timeProvider: TimeProvider[IO] = TimeProvider.io(Clock.systemUTC())
   implicit private val idProvider: IdProvider[IO]     = IdProvider.io
   implicit private val kafkaResponseSource =
-    new KafkaResponseSource[IO]("master", UUID.randomUUID().toString, config.kafkaBootstrapServers, "responses")
+    new KafkaResponseSource[IO]("master", UUID.randomUUID().toString, config.kafkaBootstrapServers, "crawler-responses")
   def start(): IO[Unit] = Database.transactor(config.postgres).use { tx =>
     implicit val transformer: ConnectionIO ~> IO =
       transactions.doobieTransactorTransformer(tx)
@@ -76,7 +76,7 @@ class Application(config: ConfigValues)(
 
     resources.use {
       case (producer, redis, session) =>
-        implicit val kafkaRequestService: KafkaRequestService[IO]     = new KafkaRequestService[IO]("requests", producer)
+        implicit val kafkaRequestService: KafkaRequestService[IO]     = new KafkaRequestService[IO]("crawler-requests", producer)
         implicit val redisConfigRepository: RedisConfigRepository[IO] = new RedisConfigRepository[IO](redis)
         implicit val crawledUrlsRepository: CrawlebUrlsRepository[IO] = CrawlebUrlsRepository.instance[IO].unsafeRunSync()
         implicit val entityService                                    = EntityService.instance(new Neo4jNodeRepository(session))

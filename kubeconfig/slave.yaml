@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend-slave
+spec:
+  replicas: 4
+  selector:
+    matchLabels:
+      app: backend-slave
+  template:
+    metadata:
+      labels:
+        app: backend-slave
+    spec:
+      containers:
+        - image: porcupine96/crawler-service:0.1
+          name: backend-slave
+          env:
+            - name: REDIS_PORT
+              value: "6379"
+            - name: KAFKA_HOST
+              value: 10.32.11.39
+            - name: KAFKA_PORT
+              value: "9092"
+      restartPolicy: Always

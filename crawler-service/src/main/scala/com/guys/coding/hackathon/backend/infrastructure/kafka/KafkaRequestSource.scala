@@ -5,6 +5,8 @@ import fs2.Stream
 import fs2.kafka.{consumerStream, AutoOffsetReset, ConsumerSettings, Deserializer}
 import hero.common.logging.{Logger, LoggingSupport}
 import com.guys.coding.hackathon.proto.notifcation.Request
+import scala.concurrent.duration._
+import scala.language.postfixOps
 
 import scala.util.Try
 
@@ -26,6 +28,8 @@ class KafkaRequestSource(groupId: String, clientId: String, bootstrapServers: St
       .withClientId(clientId)
       .withGroupId(groupId)
       .withAutoOffsetReset(AutoOffsetReset.Latest)
+      .withEnableAutoCommit(true)
+      .withAutoCommitInterval(5 seconds)
 
   def source: Stream[IO, Stream[IO, Committable[IO, Request]]] =
     consumerStream[IO]

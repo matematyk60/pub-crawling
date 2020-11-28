@@ -60,7 +60,7 @@ object DoobieRequestRepository extends DoobieRequestRepository[ConnectionIO] {
   object Statements {
 
     val createTable = sql"""
-        |CREATE TABLE public.requests (
+        |CREATE TABLE IF NOT EXISTS public.requests (
         |    request_id         VARCHAR NOT NULL PRIMARY KEY,
         |    url                VARCHAR NOT NULL,
         |    parent_request_id  VARCHAR,
