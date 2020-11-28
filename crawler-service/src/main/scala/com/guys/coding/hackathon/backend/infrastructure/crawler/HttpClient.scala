@@ -5,14 +5,19 @@ import org.http4s._
 import org.http4s.Uri
 import org.http4s.util.CaseInsensitiveString
 import org.http4s.Request
-import cats.Applicative
 import cats.syntax.functor.toFunctorOps
+import cats.syntax.option._
+import cats.MonadError
+import cats.syntax.monadError._
+import hero.common.logging.LoggingSupport
+import hero.common.logging.Logger
+import cats.Applicative
 
-object HttpClient {
+object HttpClient extends LoggingSupport {
 
   private val uaValue = "Mozilla/5.0 (X11; Fedora; Linux x86_64; rv:83.0) Gecko/20100101 Firefox/83.0"
 
-  def get[F[_]: Applicative](url: String)(implicit client: Client[F], ed: EntityDecoder[F, String]): F[Option[String]] = {
+  def get[F[_]: MonadError[*[_], Throwable]: Logger](url: String)(implicit client: Client[F], ed: EntityDecoder[F, String]): F[Option[String]] = {
     Uri.fromString(url) match {
       case Left(_) =>
         Applicative[F].pure(None)
@@ -23,7 +28,13 @@ object HttpClient {
           headers = Headers.of(Header.Raw(CaseInsensitiveString("User-Agent"), uaValue))
         )
 
-        client.expect[String](request).map(Some(_))
+        client
+          .expect[String](request)
+          .map(_.some)
+          .attemptTap {
+            case Right(result) => Applicative[F].pure(result)
+            case Left(error)   => Logger[F].error(s"Error while processing $url", error).as(none[String])
+          }
     }
   }
 
