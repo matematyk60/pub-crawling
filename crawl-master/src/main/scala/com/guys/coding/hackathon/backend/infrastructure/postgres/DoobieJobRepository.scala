@@ -66,7 +66,7 @@ object DoobieJobRepository extends DoobieJobRepository[ConnectionIO] {
   object Statements {
 
     val createTable = sql"""
-        |CREATE TABLE public.jobs (
+        |CREATE TABLE IF NOT EXISTS public.jobs (
         |    id VARCHAR         NOT NULL PRIMARY KEY,
         |    parent_job_id      VARCHAR,
         |    job_depth          INTEGER NOT NULL,

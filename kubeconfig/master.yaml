@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend-master
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: backend-master
+  template:
+    metadata:
+      labels:
+        app: backend-master
+    spec:
+      containers:
+        - image: matematyk60/crawl-master:0.0422
+          name: backend-master
+          env:
+            - name: POSTGRES_HOST
+              value: "postgres"
+            - name: POSTGRES_PORT
+              value: "5432"
+            - name: NEO4J_URL
+              value: "bolt://neo4j:7687"
+            - name: NEO4J_PASSWORD
+              value: "123"
+            - name: REDIS_CONNECTION_STRING
+              value: "redis://redis:6379"
+            - name: KAFKA_BOOTSTRAP_SERVERS
+              value: 10.32.11.39:9092
+      restartPolicy: Always
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend-master
+spec:
+  selector:
+    app: backend-master
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080
+  type: LoadBalancer

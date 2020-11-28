@@ -31,7 +31,7 @@ object ConfigValues {
     // AuthKeys(config.getString("keys.private"), config.getString("keys.public")),
     config,
     kafkaBootstrapServers = config.getString("kafka.bootstrap-servers"),
-    redisConnectionString = config.getString("redis.connection-string")
+    redisConnectionString = config.getString("redis-connection-string")
   )
 
   case class AuthKeys(privatePath: String, publicPath: String)
