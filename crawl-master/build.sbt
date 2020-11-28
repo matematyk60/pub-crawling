@@ -13,7 +13,7 @@ addCompilerPlugin(scalafixSemanticdb)
 lazy val `hackathon-backend` = (project in file("."))
   .settings(
     organization := "com.guys.coding",
-    name := "hackathon-backend",
+    name := "crawl-master",
     scalaVersion := "2.13.3",
     resolvers ++= Dependencies.additionalResolvers,
     libraryDependencies ++= Dependencies.all,

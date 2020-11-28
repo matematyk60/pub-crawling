@@ -15,10 +15,11 @@ import cats.syntax.traverse.toTraverseOps
 import cats.instances.list.catsStdInstancesForList
 import com.guys.coding.hackathon.backend.infrastructure.postgres.DoobieRequestRepository.{Request => DRequest}
 import hero.common.util.time.TimeUtils.TimeProvider
+import com.guys.coding.hackathon.backend.domain.EntityService
 
 object ResponseProcessor {
 
-  def run[F[_]: Monad: KafkaResponseSource: KafkaRequestService: TimeProvider: IdProvider: DoobieRequestRepository: CrawlebUrlsRepository: DoobieJobRepository]
+  def run[F[_]: Monad: EntityService: KafkaResponseSource: KafkaRequestService: TimeProvider: IdProvider: DoobieRequestRepository: CrawlebUrlsRepository: DoobieJobRepository]
       : fs2.Stream[F, Unit] =
     KafkaResponseSource[F].source.evalMap { record =>
       val response = record.record.value
@@ -41,6 +42,9 @@ object ResponseProcessor {
             filteredUrls <- OptionT.liftF(
                              urls.toList.traverse(url => CrawlebUrlsRepository[F].isVisited(url).map(url -> _)).map(_.filterNot(_._2).map(_._1))
                            )
+
+            _ <- OptionT.liftF(EntityService[F].saveReturning(job.id, entries = foundEntities, urls = urls))
+
             _ <- OptionT.liftF(
                   if (request.depth == job.iterations) Applicative[F].unit
                   else
@@ -66,6 +70,7 @@ object ResponseProcessor {
                 )
           } yield ()
 
+        case Response.Is.Empty => throw new IllegalArgumentException("Empty response")
       }
       action.value *> record.offset.commit
     }

@@ -20,7 +20,8 @@ class Mutation(services: Services) {
         services.kafkaRequestService,
         services.dJ,
         services.dRR,
-        services.rcR
+        services.rcR,
+        services.enttityService
       )
     )
 

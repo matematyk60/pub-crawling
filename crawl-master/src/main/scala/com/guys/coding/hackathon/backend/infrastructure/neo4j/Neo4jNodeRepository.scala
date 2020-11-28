@@ -30,8 +30,8 @@ class Neo4jNodeRepository(session: Session[IO]) {
    *  - Domain
    *
    * Edges:
-   * - coexists : Entity <-> Entity (urls, _count_)
-   * - ?? FromJob
+   * - coexists : Entity <-> Entity (urls, _FromJob_)
+   * - ?? count
    * */
 
   def insertNode(id: JobId, entityId: EntityId, entityValue: EntityValue): IO[Unit] =
