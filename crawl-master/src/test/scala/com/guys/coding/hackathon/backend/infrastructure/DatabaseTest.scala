@@ -27,7 +27,8 @@ class DatabaseTest extends AnyFlatSpec with IOChecker with PostgresSpec {
           name = "dala",
           startTime = ZonedDateTime.now(),
           operator = Operator.AND,
-          phrases = List("ala", "makota")
+          phrases = List("ala", "makota"),
+          iterations = 1
         )
       )
     )
@@ -41,7 +42,8 @@ class DatabaseTest extends AnyFlatSpec with IOChecker with PostgresSpec {
           name = "dala",
           startTime = ZonedDateTime.now(),
           operator = Operator.OR,
-          phrases = Nil
+          phrases = Nil,
+          iterations = 1
         )
       )
     )

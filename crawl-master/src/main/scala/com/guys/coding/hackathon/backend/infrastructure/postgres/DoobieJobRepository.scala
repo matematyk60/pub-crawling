@@ -73,13 +73,13 @@ object DoobieJobRepository extends DoobieJobRepository[ConnectionIO] {
         |    name               TEXT NOT NULL,
         |    start_time         TIMESTAMP NOT NULL,
         |    operator           VARCHAR NOT NULL,
-        |    phrases            VARCHAR[] NOT NULL
+        |    phrases            VARCHAR[] NOT NULL,
         |    iterations INT NOT NULL
         |);""".stripMargin.update
 
     def insertUser(job: Job) =
       Update[(String, Option[String], Int, String, Timestamp, String, List[String], Int)](
-        "INSERT INTO public.jobs (id, parent_job_id, job_depth, name, start_time, operator, phrases, iterations) VALUES (?,?, ?, ?, ?, ? ,?)"
+        "INSERT INTO public.jobs (id, parent_job_id, job_depth, name, start_time, operator, phrases, iterations) VALUES (?,?, ?, ?, ?, ? ,?, ?)"
       ).toUpdate0(
         (
           job.id.value,
