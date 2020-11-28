@@ -3,7 +3,6 @@ package com.guys.coding.hackathon.backend.api.graphql.schema.example
 import cats.effect.IO
 import com.guys.coding.hackathon.backend.api.graphql.schema.QueryHolder
 import com.guys.coding.hackathon.backend.api.graphql.service.GraphqlSecureContext
-import com.guys.coding.hackathon.backend.domain.ExampleService
 import com.guys.coding.hackathon.backend.domain.JobId
 import com.guys.coding.hackathon.backend.infrastructure.postgres.DoobieJobRepository
 import doobie.util.transactor.Transactor

@@ -2,16 +2,12 @@ package com.guys.coding.hackathon.backend.infrastructure.postgres
 
 import java.sql.Timestamp
 import java.time.ZoneId
-import java.time.ZonedDateTime
 import com.guys.coding.hackathon.backend.domain.{JobId, RequestId}
 import cats.syntax.functor.toFunctorOps
 
 import doobie.util.update.Update
-import doobie._
 import doobie.postgres.implicits._
 import java.time.ZonedDateTime
-import doobie.implicits._
-import hero.common.query.PaginatedResponse
 
 import com.guys.coding.hackathon.proto.notifcation.Query.Operator
 import doobie.implicits._

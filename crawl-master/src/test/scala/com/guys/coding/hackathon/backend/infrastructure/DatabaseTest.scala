@@ -17,7 +17,7 @@ class DatabaseTest extends AnyFlatSpec with IOChecker with PostgresSpec {
   }
 
   it should "have correct update" in {
-    check(JobS.insertUser("id", "requestId", "name", ZonedDateTime.now()))
+    check(JobS.insertUser("id", "name", RequestId("rid"), ZonedDateTime.now()))
   }
 
   it should "have correct query" in {
