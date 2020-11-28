@@ -1,0 +1,22 @@
+# Emacs
+.DS_Store
+.projectile
+.project
+\#*\#
+
+# Scala
+.idea/
+target/
+*.iml
+.bloop/
+.metals/
+metals.sbt
+
+# Python
+__pycache__
+*.pyc
+.mypy_cache/
+
+# JavaScript
+node_modules
+
