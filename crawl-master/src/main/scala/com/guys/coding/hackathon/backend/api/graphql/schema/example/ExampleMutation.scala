@@ -15,6 +15,7 @@ import com.guys.coding.hackathon.backend.infrastructure.postgres.{DoobieJobRepos
 import com.guys.coding.hackathon.backend.infrastructure.redis.RedisConfigRepository
 import hero.common.util.IdProvider
 import hero.common.util.time.TimeUtils.TimeProvider
+import com.guys.coding.hackathon.backend.domain.EntityService
 
 class ExampleMutation(
     implicit exampleService: ExampleService[IO],
@@ -23,7 +24,8 @@ class ExampleMutation(
     kafkaRequestService: KafkaRequestService[IO],
     dJ: DoobieJobRepository[IO],
     dRR: DoobieRequestRepository[IO],
-    rcR: RedisConfigRepository[IO]
+    rcR: RedisConfigRepository[IO],
+    entityService: EntityService[IO]
 ) extends MutationHolder {
 
   import ExampleTypes._

@@ -14,6 +14,8 @@ import com.guys.coding.hackathon.backend.infrastructure.postgres.{DoobieJobRepos
 import com.guys.coding.hackathon.backend.infrastructure.postgres.DoobieJobRepository.Job
 import com.guys.coding.hackathon.backend.infrastructure.postgres.DoobieRequestRepository.{Request => DRequest}
 import com.guys.coding.hackathon.backend.infrastructure.redis.RedisConfigRepository
+import com.guys.coding.hackathon.backend.domain.EntityService
+import com.guys.coding.hackathon.backend.domain.EntityValue
 
 object CrawlingService {
 
@@ -27,7 +29,7 @@ object CrawlingService {
     s"http://duckduckgo.com/html?q=$search!g"
   }
 
-  def startFromPhrases[F[_]: Monad: IdProvider: TimeProvider: KafkaRequestService: DoobieJobRepository: DoobieRequestRepository: RedisConfigRepository](
+  def startFromPhrases[F[_]: EntityService: Monad: IdProvider: TimeProvider: KafkaRequestService: DoobieJobRepository: DoobieRequestRepository: RedisConfigRepository](
       phrases: List[String],
       operator: String,
       jobIterations: Int,
@@ -43,6 +45,7 @@ object CrawlingService {
       jobId       <- IdProvider[F].newId()
       currentTime <- TimeProvider[F].currentTime()
       job         = Job(JobId(jobId), parentJob = None, jobDepth = 0, "name1", currentTime, operator_, phrases, jobIterations)
+      _           <- EntityService[F].insertQueryNode(job.id, EntityValue(operator + " " + phrases.reduceOption(_ + _).getOrElse("")))
       _           <- DoobieJobRepository[F].createJob(job)
       urls        = List(googleUrl(phrases), duckDuckGoUrl(phrases))
       requests <- urls.traverse(url =>

@@ -35,6 +35,8 @@ import com.guys.coding.hackathon.backend.infrastructure.inmem.CrawlebUrlsReposit
 import dev.profunktor.redis4cats.Redis
 import doobie.free.connection.ConnectionIO
 import hero.common.util.time.TimeUtils.TimeProvider
+import com.guys.coding.hackathon.backend.domain.EntityService
+import com.guys.coding.hackathon.backend.infrastructure.neo4j.Neo4jNodeRepository
 
 class Application(config: ConfigValues)(
     implicit ec: ExecutionContext,
@@ -57,10 +59,6 @@ class Application(config: ConfigValues)(
     implicit val transformer: ConnectionIO ~> IO =
       transactions.doobieTransactorTransformer(tx)
     val neo = config.neo4j
-    val session: Resource[IO, Session[IO]] = for {
-      driver  <- GraphDatabase.driver[IO](neo.url, AuthTokens.basic(neo.username, neo.password))
-      session <- driver.session
-    } yield session
 
     val kafkaPR = fs2.kafka.producerResource[IO, String, Request](KafkaRequestService.producerSettings(config.kafkaBootstrapServers))
     val redisR  = Redis.apply[IO].utf8(config.redisConnectionString)
@@ -69,17 +67,30 @@ class Application(config: ConfigValues)(
     implicit val requestIOREPOSITORY: DoobieRequestRepository[IO] = DoobieRequestRepository.mapK(transformer)
 
     val resources = for {
+      driver  <- GraphDatabase.driver[IO](neo.url, AuthTokens.basic(neo.username, neo.password))
+      session <- driver.session
+
       kafkaP <- kafkaPR
       redis  <- redisR
-    } yield (kafkaP, redis)
+    } yield (kafkaP, redis, session)
 
     resources.use {
-      case (producer, redis) =>
+      case (producer, redis, session) =>
         implicit val kafkaRequestService: KafkaRequestService[IO]     = new KafkaRequestService[IO]("requests", producer)
         implicit val redisConfigRepository: RedisConfigRepository[IO] = new RedisConfigRepository[IO](redis)
         implicit val crawledUrlsRepository: CrawlebUrlsRepository[IO] = CrawlebUrlsRepository.instance[IO].unsafeRunSync()
+        implicit val entityService                                    = EntityService.instance(new Neo4jNodeRepository(session))
         val services =
-          Services(new ExampleService[IO] {}, jwtTokenService, tx, kafkaRequestService, jobIOREPOSITORY, requestIOREPOSITORY, redisConfigRepository)
+          Services(
+            entityService,
+            new ExampleService[IO] {},
+            jwtTokenService,
+            tx,
+            kafkaRequestService,
+            jobIOREPOSITORY,
+            requestIOREPOSITORY,
+            redisConfigRepository
+          )
         val routes = Router(
           "/graphql" -> new GraphqlRoute(services).route
         ).orNotFound

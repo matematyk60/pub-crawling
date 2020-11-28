@@ -72,6 +72,8 @@ message EntityMatch {
 * Cypher
 #+begin_src cypher
 match path = (m)-[r]-(n) return path;
+
+match (m)-[r]-(n) delete m,r,n;
 match (m) return m;
 
 create(e:Entity{jobId:"job1",entityId: "IPHONE and Tanio", entityValue: "query"});
