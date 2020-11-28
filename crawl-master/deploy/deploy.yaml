@@ -1,0 +1,25 @@
+version: "3.1"
+
+services:
+  backend:
+    image: alamakota/hackathon-backend:0.3
+    ports:
+      - "8080:8080"
+    restart: always
+    environment:
+      PRIVATE_KEY_PATH: /keys/private.der
+      PUBLIC_KEY_PATH: /keys/public.der
+    volumes:
+      - type: bind
+        source: /home/owner/git/foss/scala/hackathon-backend/.private
+        target: /keys # TODO:bcm  read only
+
+  postgres:
+    image: postgres:12-alpine # mdillon/postgis:9.6
+    ports:
+      - "5432:5432"
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: password
+      POSTGRES_USER: username
+      POSTGRES_DB: db_name
