@@ -1,19 +1,15 @@
 package com.guys.coding.hackathon.backend.infrastructure.neo4j
 
-import cats.effect.IO
-import neotypes.Session
-import neotypes.implicits.mappers.all._
-// import neotypes.implicits.mappers.parameters._
-// import neotypes.implicits.syntax.all._
-// import neotypes.cats.data.implicits.{nonEmptyListParameterMapper, nonEmptyListResultMapper, nonEmptyListValueMapper}
-import com.guys.coding.hackathon.backend.domain.RequestId
-import com.guys.coding.hackathon.backend.domain.JobId
 import java.time.ZonedDateTime
+
+import cats.data.NonEmptyList
+import cats.effect.IO
 import com.guys.coding.hackathon.backend.domain.EntityId
 import com.guys.coding.hackathon.backend.domain.EntityValue
-import neotypes.implicits.syntax.cypher.{neotypesSyntaxCypherStringInterpolator} // Adds the ` interpolator into the scope.
-import cats.data.NonEmptyList
-import neotypes.mappers.ParameterMapper
+import com.guys.coding.hackathon.backend.domain.JobId
+import neotypes.Session
+import neotypes.implicits.mappers.all._
+import neotypes.implicits.syntax.cypher.neotypesSyntaxCypherStringInterpolator
 
 class Neo4jNodeRepository(session: Session[IO]) {
   // import com.guys.coding.hackathon.backend.infrastructure.neo4j.Neo4jNodeRepository.{enitityToMapper, EntityTo}
@@ -39,17 +35,20 @@ class Neo4jNodeRepository(session: Session[IO]) {
    * */
 
   def insertNode(id: JobId, entityId: EntityId, entityValue: EntityValue): IO[Unit] =
-    c"create(e:Entity{jobId:${id.value},entityId: ${entityId.value}, entityValue: ${entityValue.value}});".query[Unit].single(session)
+    c"""MERGE(e:Entity{jobId:${id.value}})
+      ON CREATE SET e = {jobId:${id.value},entityId: ${entityId.value}, entityValue: ${entityValue.value}};
+   """.query[Unit].single(session)
+  // c"create(e:Entity{jobId:${id.value},entityId: ${entityId.value}, entityValue: ${entityValue.value}});".query[Unit].single(session)
 
   def saveEdge(from: JobId, to: NonEmptyList[(EntityId, EntityValue)], urls: List[String]): IO[Unit] = {
     to.traverse {
       case (id, value) => // TODO:bcm  batch it
         c"""
       match(e:Entity{jobId:${from.value}})
-          merge (e)-[r:coexists]-> (to:Entity {entityId: ${id.value}, entityValue:${value.value}})
-          ON CREATE SET r.counter = ${urls.size};
+          merge (e)-[r:coexists]-> (to:Entity {entityId: ${id.value}, entityValue:${value.value}, name : ${value.value}})
+          ON CREATE SET r.counter = ${urls.size}
           ON MATCH SET
-          r.counter = coalesce(n.counter, 0) + ${urls.size};
+          r.counter = coalesce(r.counter, 0) + ${urls.size};
     """.query[Unit].single(session)
     }.void
 
