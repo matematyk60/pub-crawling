@@ -8,7 +8,8 @@ case class ConfigValues(
     postgres: PostgresConfig,
     // authKeys: AuthKeys,
     neo4j: Neo4jConfig,
-    raw: Config
+    raw: Config,
+    kafkaBootstrapServers: String
 )
 
 object ConfigValues {
@@ -27,7 +28,8 @@ object ConfigValues {
       password = config.getString("neo4j.password")
     ),
     // AuthKeys(config.getString("keys.private"), config.getString("keys.public")),
-    config
+    config,
+    kafkaBootstrapServers = config.getString("kafka.bootstrap-servers")
   )
 
   case class AuthKeys(privatePath: String, publicPath: String)

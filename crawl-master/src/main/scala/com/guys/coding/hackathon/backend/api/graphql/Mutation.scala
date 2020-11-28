@@ -1,15 +1,19 @@
 package com.guys.coding.hackathon.backend.api.graphql
 
+import java.time.Clock
+
 import com.guys.coding.hackathon.backend.Services
 import com.guys.coding.hackathon.backend.api.graphql.schema.MutationHolder
 import com.guys.coding.hackathon.backend.api.graphql.schema.example.ExampleMutation
+import hero.common.util.IdProvider
+import hero.common.util.time.TimeUtils.TimeProvider
 import sangria.schema.ObjectType
 
 class Mutation(services: Services) {
 
   private val mutationHolders =
     List[MutationHolder](
-      new ExampleMutation(services.exampleService)
+      new ExampleMutation()(services.exampleService, IdProvider.io, TimeProvider.io(Clock.systemUTC()), services.kafkaRequestService)
     )
 
   val MutationType = ObjectType(

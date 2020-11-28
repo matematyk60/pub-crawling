@@ -23,7 +23,6 @@ lazy val `hackathon-backend` = (project in file("."))
   .settings(protoSettings: _*)
 
 PB.protoSources in Compile :=
-  Seq.empty
-// Seq(
-//   "user-proto"
-// ).map(baseDirectory.value / "hackathon-backend-proto" / _)
+ Seq(
+   baseDirectory.value / "../protocol/notification"
+ )

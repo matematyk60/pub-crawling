@@ -59,7 +59,8 @@ object Dependencies {
     "com.chuusai"          %% "shapeless"            % "2.3.3",
     "com.dimafeng"         %% "neotypes"             % neotypesVersion,
     "com.dimafeng"         %% "neotypes-cats-effect" % neotypesVersion,
-    "com.dimafeng"         %% "neotypes-cats-data"   % neotypesVersion
+    "com.dimafeng"         %% "neotypes-cats-data"   % neotypesVersion,
+    "com.github.fd4s"      %% "fs2-kafka"            % "1.1.0"
   )
 
   private val testDependencies = Seq(
