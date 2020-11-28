@@ -45,7 +45,7 @@ class GraphqlRoute(services: Services)(implicit ec: ExecutionContext, cs: Contex
         val operation = root.operationName.string.getOption(body)
         val vars      = root.variables.json.getOption(body) getOrElse Json.obj()
         val context =
-          GraphqlSecureContext(services,bearerToken.map(Token), services.jwtTokenService)
+          GraphqlSecureContext(services, bearerToken.map(Token), services.jwtTokenService)
 
         query.map(QueryParser.parse(_)) match {
           case Some(Success(value)) =>
