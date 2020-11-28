@@ -2,16 +2,16 @@
 
 set -e
 
-owner=owner
+owner=supernovaunwired
 
 ebt "universal:packageBin"
 version=$(sed  -E 's/version\ ?:=\ ?\"([0-9]\.[0-9])\"/\1/' <../version.sbt)
-zipfile="../target/universal/hackathon-backend-$version.zip"
+zipfile="../target/universal/crawl-master-$version.zip"
 
 unzip "$zipfile"
-mv "hackathon-backend-$version" target
+mv "crawl-master-$version" target
 
-tag="$owner/hackathon-backend:$version"
+tag="$owner/crawl-master:$version"
 
 if command -v podman >/dev/null; then
 	podman build -t "$tag" .
