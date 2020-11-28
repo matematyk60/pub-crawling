@@ -2,6 +2,8 @@ package com.guys.coding.hackathon.backend
 
 import java.security.PrivateKey
 import java.security.PublicKey
+import java.time.Clock
+import java.util.UUID
 
 import scala.concurrent.ExecutionContext
 import cats.effect.ContextShift
@@ -9,27 +11,37 @@ import cats.effect.Timer
 import com.guys.coding.hackathon.backend.api.graphql.core.GraphqlRoute
 import com.guys.coding.hackathon.backend.domain.ExampleService
 import com.guys.coding.hackathon.backend.infrastructure.jwt.JwtTokenService
-import com.guys.coding.hackathon.backend.infrastructure.postgres.Database
+import com.guys.coding.hackathon.backend.infrastructure.postgres.{Database, DoobieJobRepository, DoobieRequestRepository, transactions}
 import hero.common.logging.Logger
 import hero.common.logging.slf4j.LoggingConfigurator
 import cats.effect.{IO, Resource}
-import com.guys.coding.hackathon.backend.infrastructure.KafkaRequestService
+import cats.implicits.catsSyntaxTuple2Parallel
+import com.guys.coding.hackathon.backend.infrastructure.kafka.{KafkaRequestService, KafkaResponseSource}
 import neotypes.{GraphDatabase, Session}
-import neotypes.cats.effect.implicits._ // Brings the implicit Async[IO] instance into the scope. // Provides the query[T] extension method.
 import neotypes.cats.effect.implicits._
+import neotypes.cats.effect.implicits._
+import dev.profunktor.redis4cats.effect.Log.Stdout._
 import org.neo4j.driver.AuthTokens
-import hero.common.util.LoggingExt
+import hero.common.util.{IdProvider, LoggingExt}
 import org.http4s.server.Router
 import org.http4s.server.blaze.BlazeServerBuilder
 import org.http4s.server.middleware.CORS
 import org.http4s.syntax.kleisli._
-import com.guys.coding.hackathon.backend.infrastructure.postgres.DoobieJobRepository
+import com.guys.coding.hackathon.backend.infrastructure.redis.RedisConfigRepository
 import com.guys.coding.hackathon.proto.notifcation.Request
+import cats.tagless.syntax.all.toFunctorKOps
+import cats.~>
+import com.guys.coding.hackathon.backend.app.ResponseProcessor
+import com.guys.coding.hackathon.backend.infrastructure.inmem.CrawlebUrlsRepository
+import dev.profunktor.redis4cats.Redis
+import doobie.free.connection.ConnectionIO
+import hero.common.util.time.TimeUtils.TimeProvider
 
 class Application(config: ConfigValues)(
     implicit ec: ExecutionContext,
     appLogger: Logger[IO],
-    cs: ContextShift[IO]
+    cs: ContextShift[IO],
+    timer: Timer[IO]
 ) extends LoggingExt {
 
   LoggingConfigurator.setRootLogLevel(config.app.rootLogLevel)
@@ -38,37 +50,56 @@ class Application(config: ConfigValues)(
   private val privateKey: PrivateKey = null //PrivateKeyReader.get(config.authKeys.privatePath)
   private val publicKey: PublicKey   = null //PublicKeyReader.get(config.authKeys.publicPath)
   private val jwtTokenService        = new JwtTokenService(publicKey, privateKey)
-
-  def start()(implicit t: Timer[IO]): IO[Unit] = Database.transactor(config.postgres).use { tx =>
-
+  implicit private val timeProvider: TimeProvider[IO] = TimeProvider.io(Clock.systemUTC())
+  implicit private val idProvider: IdProvider[IO] = IdProvider.io
+  implicit private val kafkaResponseSource =
+    new KafkaResponseSource[IO]("master", UUID.randomUUID().toString, config.kafkaBootstrapServers, "responses")
+  def start(): IO[Unit] = Database.transactor(config.postgres).use { tx =>
+    implicit val transformer: ConnectionIO ~> IO =
+      transactions.doobieTransactorTransformer(tx)
     val neo = config.neo4j
     val session: Resource[IO, Session[IO]] = for {
       driver  <- GraphDatabase.driver[IO](neo.url, AuthTokens.basic(neo.username, neo.password))
       session <- driver.session
     } yield session
 
-    val kafkaP = fs2.kafka.producerResource[IO, String, Request](KafkaRequestService.producerSettings(config.kafkaBootstrapServers))
+    val kafkaPR = fs2.kafka.producerResource[IO, String, Request](KafkaRequestService.producerSettings(config.kafkaBootstrapServers))
+    val redisR  = Redis.apply[IO].utf8(config.redisConnectionString)
 
-    kafkaP.use {
-      case (producer) =>
-        implicit val kafkaRequestService: KafkaRequestService[IO] = new KafkaRequestService[IO]("requests", producer)
+    implicit val jobIOREPOSITORY: DoobieJobRepository[IO]         = DoobieJobRepository.mapK(transformer)
+    implicit val requestIOREPOSITORY: DoobieRequestRepository[IO] = DoobieRequestRepository.mapK(transformer)
 
-        val services = Services(new ExampleService[IO] {}, jwtTokenService, tx, kafkaRequestService)
+    val resources = for {
+      kafkaP <- kafkaPR
+      redis  <- redisR
+    } yield (kafkaP, redis)
+
+    resources.use {
+      case (producer, redis) =>
+        implicit val kafkaRequestService: KafkaRequestService[IO]     = new KafkaRequestService[IO]("requests", producer)
+        implicit val redisConfigRepository: RedisConfigRepository[IO] = new RedisConfigRepository[IO](redis)
+        implicit val crawledUrlsRepository: CrawlebUrlsRepository[IO] = CrawlebUrlsRepository.instance[IO].unsafeRunSync()
+        val services =
+          Services(new ExampleService[IO] {}, jwtTokenService, tx, kafkaRequestService, jobIOREPOSITORY, requestIOREPOSITORY, redisConfigRepository)
         val routes = Router(
           "/graphql" -> new GraphqlRoute(services).route
         ).orNotFound
         for {
           _ <- tx.trans.apply(DoobieJobRepository.Statements.createTable.run)
+          _ <- tx.trans.apply(DoobieRequestRepository.Statements.createTable.run)
           _ <- appLogger.info(s"Started server at ${config.app.bindHost}:${config.app.bindPort}")
-          _ <- BlazeServerBuilder[IO]
-            .bindHttp(config.app.bindPort, config.app.bindHost)
-            .withHttpApp(CORS(routes))
-            .serve
-            .compile
-            .drain
+          val run = (
+            BlazeServerBuilder[IO]
+              .bindHttp(config.app.bindPort, config.app.bindHost)
+              .withHttpApp(CORS(routes))
+              .serve
+              .compile
+              .drain,
+            ResponseProcessor.run[IO].compile.drain
+          ).parTupled
+        _ <- run
         } yield ()
     }
-
 
   }
 

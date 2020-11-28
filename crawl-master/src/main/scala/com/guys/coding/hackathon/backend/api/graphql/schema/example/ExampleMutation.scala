@@ -10,7 +10,9 @@ import sangria.marshalling.circe._
 import com.guys.coding.hackathon.backend.domain.ExampleService
 import cats.effect.IO
 import com.guys.coding.hackathon.backend.app.CrawlingService
-import com.guys.coding.hackathon.backend.infrastructure.KafkaRequestService
+import com.guys.coding.hackathon.backend.infrastructure.kafka.KafkaRequestService
+import com.guys.coding.hackathon.backend.infrastructure.postgres.{DoobieJobRepository, DoobieRequestRepository}
+import com.guys.coding.hackathon.backend.infrastructure.redis.RedisConfigRepository
 import hero.common.util.IdProvider
 import hero.common.util.time.TimeUtils.TimeProvider
 
@@ -18,7 +20,10 @@ class ExampleMutation(
     implicit exampleService: ExampleService[IO],
     idProvider: IdProvider[IO],
     timeProvider: TimeProvider[IO],
-    kafkaRequestService: KafkaRequestService[IO]
+    kafkaRequestService: KafkaRequestService[IO],
+    dJ: DoobieJobRepository[IO],
+dRR: DoobieRequestRepository[IO],
+    rcR: RedisConfigRepository[IO]
 ) extends MutationHolder {
 
   import ExampleTypes._
@@ -38,15 +43,25 @@ class ExampleMutation(
 
         }
       ), {
-        val phrasesArg  = Argument("phrases", ListInputType(StringType))
-        val operatorArg = Argument("operator", StringType)
+        val phrasesArg               = Argument("phrases", ListInputType(StringType))
+        val operatorArg              = Argument("operator", StringType)
+        val iterationsArg            = Argument("iterations", IntType)
+        val emailEntityEnabled       = Argument("emailEntityEnabled", BooleanType)
+        val phoneNumberEntityEnabled = Argument("phoneNumberEntityEnabled", BooleanType)
+
         Field(
           "startCrawling",
           StringType,
-          arguments = phrasesArg :: operatorArg :: Nil,
+          arguments = phrasesArg :: operatorArg :: iterationsArg :: emailEntityEnabled :: phoneNumberEntityEnabled :: Nil,
           resolve = c => {
             CrawlingService
-              .startFromPhrases[IO](c.arg(phrasesArg).toList, c.arg(operatorArg))
+              .startFromPhrases[IO](
+                phrases = c.arg(phrasesArg).toList,
+                operator = c.arg(operatorArg),
+                jobIterations = c.arg(iterationsArg),
+                emailEntityEnabled = c.arg(emailEntityEnabled),
+                phoneNumberEntityEnabled = c.arg(phoneNumberEntityEnabled)
+              )
               .map(show => "...")
               .unsafeToFuture()
           }

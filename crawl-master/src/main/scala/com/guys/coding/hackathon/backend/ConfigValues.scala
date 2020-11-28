@@ -9,7 +9,8 @@ case class ConfigValues(
     // authKeys: AuthKeys,
     neo4j: Neo4jConfig,
     raw: Config,
-    kafkaBootstrapServers: String
+    kafkaBootstrapServers: String,
+    redisConnectionString: String
 )
 
 object ConfigValues {
@@ -29,7 +30,8 @@ object ConfigValues {
     ),
     // AuthKeys(config.getString("keys.private"), config.getString("keys.public")),
     config,
-    kafkaBootstrapServers = config.getString("kafka.bootstrap-servers")
+    kafkaBootstrapServers = config.getString("kafka.bootstrap-servers"),
+    redisConnectionString = config.getString("redis.connection-string")
   )
 
   case class AuthKeys(privatePath: String, publicPath: String)

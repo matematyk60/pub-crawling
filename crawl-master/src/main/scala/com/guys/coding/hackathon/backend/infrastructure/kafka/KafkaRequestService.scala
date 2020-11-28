@@ -1,7 +1,7 @@
-package com.guys.coding.hackathon.backend.infrastructure
+package com.guys.coding.hackathon.backend.infrastructure.kafka
 
 import cats.Applicative
-import cats.effect.{ConcurrentEffect, IO, Sync}
+import cats.effect.{ConcurrentEffect, Sync}
 import cats.syntax.flatMap.toFlatMapOps
 import cats.syntax.functor.toFunctorOps
 import com.guys.coding.hackathon.proto.notifcation.{Crawl, Request}

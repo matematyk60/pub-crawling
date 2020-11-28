@@ -4,14 +4,27 @@ import java.time.ZoneId
 import java.time.ZonedDateTime
 
 import cats.syntax.functor.toFunctorOps
+import cats.tagless.{Derive, FunctorK}
 import com.guys.coding.hackathon.backend.domain.JobId
+import com.guys.coding.hackathon.backend.infrastructure.postgres.DoobieJobRepository.Job
 import com.guys.coding.hackathon.proto.notifcation.Query.Operator
 import doobie.implicits._
 import doobie.implicits.javasql.TimestampMeta
 import doobie.postgres.implicits._
 import doobie.{implicits => _, _}
+import simulacrum.typeclass
 
-object DoobieJobRepository {
+@typeclass
+trait DoobieJobRepository[F[_]] {
+  def getJobs(): F[List[Job]]
+  def getJob(id: JobId): F[Option[Job]]
+  def createJob(job: Job): F[Unit]
+}
+
+object DoobieJobRepository extends DoobieJobRepository[ConnectionIO] {
+
+  implicit def functorKInstance: FunctorK[DoobieJobRepository] =
+    Derive.functorK[DoobieJobRepository]
 
   def getJobs(): ConnectionIO[List[Job]] =
     Statements.getJobs
@@ -27,16 +40,17 @@ object DoobieJobRepository {
   def createJob(job: Job): ConnectionIO[Unit] =
     Statements.insertUser(job).run.void
 
-  private val makeJob: (String, Option[String], Int, String, Timestamp, String, List[String]) => Job = {
+  private val makeJob: (String, Option[String], Int, String, Timestamp, String, List[String], Int) => Job = {
     case (
-        jobId,
-        parentJobId,
-        depth,
-        name,
-        time,
-        operator,
-        phrases
-        ) =>
+      jobId,
+      parentJobId,
+      depth,
+      name,
+      time,
+      operator,
+      phrases,
+      iterations
+      ) =>
       Job(
         JobId(jobId),
         parentJobId.map(JobId),
@@ -44,7 +58,8 @@ object DoobieJobRepository {
         name,
         time.toLocalDateTime().atZone(ZoneId.systemDefault()),
         operatorFromString(operator),
-        phrases
+        phrases,
+        iterations
       )
   }
 
@@ -59,11 +74,12 @@ object DoobieJobRepository {
         |    start_time         TIMESTAMP NOT NULL,
         |    operator           VARCHAR NOT NULL,
         |    phrases            VARCHAR[] NOT NULL
+        |    iterations INT NOT NULL
         |);""".stripMargin.update
 
     def insertUser(job: Job) =
-      Update[(String, Option[String], Int, String, Timestamp, String, List[String])](
-        "INSERT INTO public.jobs (id, parent_job_id, job_depth, name, start_time, operator, phrases) VALUES (?,?, ?, ?, ?, ? ,?)"
+      Update[(String, Option[String], Int, String, Timestamp, String, List[String], Int)](
+        "INSERT INTO public.jobs (id, parent_job_id, job_depth, name, start_time, operator, phrases, iterations) VALUES (?,?, ?, ?, ?, ? ,?)"
       ).toUpdate0(
         (
           job.id.value,
@@ -72,17 +88,18 @@ object DoobieJobRepository {
           job.name,
           Timestamp.from(job.startTime.toInstant()),
           operatorToString(job.operator),
-          job.phrases
+          job.phrases,
+          job.iterations
         )
       )
 
     val getJobs =
-      sql"SELECT id, parent_job_id, job_depth, name, start_time, operator, phrases FROM jobs"
-        .query[(String, Option[String], Int, String, Timestamp, String, List[String])]
+      sql"SELECT id, parent_job_id, job_depth, name, start_time, operator, phrases, iterations FROM jobs"
+        .query[(String, Option[String], Int, String, Timestamp, String, List[String], Int)]
 
     def getJob(id: JobId) =
-      sql"SELECT id, parent_job_id, job_depth, name, start_time, operator, phrases jobs where id = ${id.value}"
-        .query[(String, Option[String], Int, String, Timestamp, String, List[String])]
+      sql"SELECT id, parent_job_id, job_depth, name, start_time, operator, phrases, iterations jobs where id = ${id.value}"
+        .query[(String, Option[String], Int, String, Timestamp, String, List[String], Int)]
 
   }
 
@@ -105,7 +122,8 @@ object DoobieJobRepository {
       name: String,
       startTime: ZonedDateTime,
       operator: Operator,
-      phrases: List[String]
+      phrases: List[String],
+      iterations: Int
   )
 
 }

@@ -66,4 +66,8 @@ class DatabaseTest extends AnyFlatSpec with IOChecker with PostgresSpec {
     check(RequestS.get(RequestId("ala")))
   }
 
+  it should "set request complete" in {
+    check(RequestS.setRequestComplete(RequestId("lana"), success = true).update)
+  }
+
 }

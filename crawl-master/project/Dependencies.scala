@@ -6,6 +6,7 @@ object Dependencies {
   val ScalaMockVersion         = "5.0.0"
   val SimulacrumVersion        = "0.19.0"
   val TypesafeConfigVersion    = "1.4.1"
+  val catsTaglessVersion = "0.11"
 
   val grpcNettyVersion: String   = Version.grpcJavaVersion
   val grpcRuntimeVersion: String = Version.scalapbVersion
@@ -43,7 +44,8 @@ object Dependencies {
     "org.tpolecat" %% "doobie-postgres"   % doobieVersion,
     "org.tpolecat" %% "doobie-hikari"     % doobieVersion,
     "com.beachape" %% "enumeratum-doobie" % enumeratumDoobieVersion,
-    "org.tpolecat" %% "doobie-scalatest"  % doobieVersion % Test
+    "org.tpolecat" %% "doobie-scalatest"  % doobieVersion % Test,
+    "dev.profunktor" %% "redis4cats-effects" % "0.10.3"
   )
 
   private val grpcDependencies = Seq(
@@ -60,6 +62,7 @@ object Dependencies {
     "com.dimafeng"         %% "neotypes"             % neotypesVersion,
     "com.dimafeng"         %% "neotypes-cats-effect" % neotypesVersion,
     "com.dimafeng"         %% "neotypes-cats-data"   % neotypesVersion,
+    "org.typelevel" %% "cats-tagless-macros" % catsTaglessVersion,
     "com.github.fd4s"      %% "fs2-kafka"            % "1.1.0"
   )
 

@@ -5,17 +5,34 @@ import java.time.ZoneId
 import java.time.ZonedDateTime
 
 import cats.syntax.functor.toFunctorOps
+import cats.tagless.{Derive, FunctorK}
 import com.guys.coding.hackathon.backend.domain.JobId
 import com.guys.coding.hackathon.backend.domain.RequestId
+import com.guys.coding.hackathon.backend.infrastructure.postgres.DoobieRequestRepository.Request
 import com.guys.coding.hackathon.proto.notifcation.Query.Operator
 import doobie.implicits._
 import doobie.implicits.javasql.TimestampMeta
 import doobie.util.update.Update
 import doobie.{implicits => _, _}
+import simulacrum.typeclass
 
-object DoobieRequestRepository {
+@typeclass
+trait DoobieRequestRepository[F[_]] {
+  def jobRequests(jobId: JobId): F[List[Request]]
+  def childRequest(requestId: RequestId): F[List[Request]]
+  def get(requestId: RequestId): F[Option[Request]]
+  def createRequest(request: Request): F[Unit]
+  def setRequestComplete(requestId: RequestId, success: Boolean): F[Unit]
+}
 
-  def jobRequests(jobId: JobId): ConnectionIO[List[Request]]          = Statements.jobsRequests(jobId).to[List]
+object DoobieRequestRepository extends DoobieRequestRepository[ConnectionIO] {
+
+  implicit def functorKInstance: FunctorK[DoobieRequestRepository] =
+    Derive.functorK[DoobieRequestRepository]
+
+  def jobRequests(jobId: JobId): ConnectionIO[List[Request]] = Statements.jobsRequests(jobId).to[List]
+  def setRequestComplete(requestId: RequestId, success: Boolean): ConnectionIO[Unit] =
+    Statements.setRequestComplete(requestId, success).update.run.void
   def childRequest(requestId: RequestId): ConnectionIO[List[Request]] = Statements.childRequests(requestId).to[List]
   def get(requestId: RequestId): ConnectionIO[Option[Request]]        = Statements.get(requestId).option
 
@@ -50,7 +67,8 @@ object DoobieRequestRepository {
         |    parent_request_id  VARCHAR,
         |    depth              INTEGER NOT NULL,
         |    job_id             VARCHAR NOT NULL,
-        |    start_time         TIMESTAMP NOT NULL
+        |    start_time         TIMESTAMP NOT NULL,
+        |    success BOOLEAN
         |);""".stripMargin.update
 
     def insertRequest(r: Request) =
@@ -71,6 +89,9 @@ object DoobieRequestRepository {
       sql"SELECT request_id,url, parent_request_id, depth,job_id,start_time FROM requests where job_id = ${j.value}"
         .query[(String, String, Option[String], Int, String, Timestamp)]
         .map(makeRequest.tupled)
+
+    def setRequestComplete(id: RequestId, success: Boolean) =
+      sql"UPDATE requests set success = $success WHERE request_id = $id"
 
     def childRequests(parent: RequestId) =
       sql"SELECT request_id, url,parent_request_id, depth,job_id,start_time FROM requests where parent_request_id = ${parent.value}"
