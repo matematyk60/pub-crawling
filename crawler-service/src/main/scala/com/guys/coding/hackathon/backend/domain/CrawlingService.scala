@@ -15,6 +15,7 @@ import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.select.Elements
 import cats.MonadError
+import cats.effect.Sync
 import hero.common.logging.Logger
 
 object CrawlingService {
@@ -28,7 +29,7 @@ object CrawlingService {
   //   println(demo.text())
   // }
 
-  def crawl[F[_]: MonadError[*[_], Throwable]: Logger](requestId: String, query: Option[Query], url: String, config: CrawlingConfig)(
+  def crawl[F[_]: Sync: Logger](requestId: String, query: Option[Query], url: String, config: CrawlingConfig)(
       implicit client: Client[F],
       ed: EntityDecoder[F, String]
   ): F[Either[CrawlFailure, CrawlSuccess]] = {

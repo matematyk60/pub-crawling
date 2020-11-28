@@ -13,7 +13,7 @@ spec:
         app: backend-slave
     spec:
       containers:
-        - image: porcupine96/crawler-service:0.1
+        - image: matematyk60/crawler-service:0.4
           name: backend-slave
           env:
             - name: REDIS_PORT
