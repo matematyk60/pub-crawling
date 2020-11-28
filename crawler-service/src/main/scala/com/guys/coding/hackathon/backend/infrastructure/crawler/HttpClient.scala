@@ -7,8 +7,6 @@ import org.http4s.util.CaseInsensitiveString
 import org.http4s.Request
 import cats.syntax.functor.toFunctorOps
 import cats.syntax.option._
-import cats.MonadError
-import cats.syntax.monadError._
 import cats.syntax.applicativeError._
 import hero.common.logging.LoggingSupport
 import hero.common.logging.Logger

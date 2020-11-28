@@ -12,7 +12,6 @@ import redis.RedisClient
 import akka.actor.ActorSystem
 import fs2.kafka.producerResource
 import com.guys.coding.hackathon.backend.infrastructure.redis.RedisConfigService
-import com.guys.coding.hackathon.backend.app.RequestProcessor
 import com.guys.coding.hackathon.backend.infrastructure.kafka.KafkaRequestSource
 import com.guys.coding.hackathon.backend.infrastructure.kafka.KafkaSource
 import com.guys.coding.hackathon.proto.notifcation.Request
@@ -23,6 +22,9 @@ import java.time.Clock
 import com.guys.coding.hackathon.backend.infrastructure.kafka.KafkaResponseService
 import com.guys.coding.hackathon.backend.domain.ResponseService
 import org.http4s.client.blaze.BlazeClientBuilder
+import scala.concurrent.duration.Duration
+import java.util.concurrent.TimeUnit
+import com.guys.coding.hackathon.backend.app.RequestProcessor
 import org.http4s.client.Client
 
 class Application(config: ConfigValues)(
@@ -55,7 +57,11 @@ class Application(config: ConfigValues)(
   def start(): IO[Unit] = {
     val resources =
       for {
-        client     <- BlazeClientBuilder[IO](ec).withMaxTotalConnections(512).withMaxWaitQueueLimit(1024).resource
+        client <- BlazeClientBuilder[IO](ec)
+                   .withMaxTotalConnections(512)
+                   .withMaxWaitQueueLimit(1024)
+                   .withRequestTimeout(Duration.apply(20, TimeUnit.SECONDS))
+                   .resource
         responseKP <- producerResource(KafkaResponseService.producerSettings(config.kafka.bootstrapServers))
       } yield (client, responseKP)
 
