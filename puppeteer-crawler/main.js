@@ -3,14 +3,17 @@ const kafka = require("kafka-node");
 const protobuf = require("protobufjs");
 const redis = require("redis");
 
-protobuf.load("../protocol/notification/protocol.proto", function (err, root) {
+// let protoPath = "../protocol/notification/protocol.proto";
+let protoPath = "protocol.proto";
+
+protobuf.load(protoPath, function (err, root) {
   if (err) throw err;
 
   let Request = root.lookupType("Request");
   let Response = root.lookupType("Response");
 
   const kafkaClient = new kafka.KafkaClient();
-  const redisClient = redis.createClient();
+  const redisClient = redis.createClient((host = "redis"));
 
   const consumer = new kafka.Consumer(
     kafkaClient,
@@ -39,63 +42,88 @@ protobuf.load("../protocol/notification/protocol.proto", function (err, root) {
         const url = request.crawl.url;
 
         (async () => {
-          const browser = await puppeteer.launch({});
-          const page = await browser.newPage();
+          try {
+            const browser = await puppeteer.launch({});
+            const page = await browser.newPage();
 
-          await page.goto(url, { waitUntil: "load" });
+            await page.goto(url, { waitUntil: "load" });
 
-          const [links, content] = await page.evaluate(() => {
-            let links = [];
-            let l = document.links;
+            const [links, content] = await page.evaluate(() => {
+              let links = [];
+              let l = document.links;
 
-            for (var i = 0; i < l.length; i++) {
-              links.push(l[i].href);
-            }
+              for (var i = 0; i < l.length; i++) {
+                links.push(l[i].href);
+              }
 
-            const text = document.body.textContent.toString();
+              const text = document.body.textContent.toString();
 
-            return [Array.from(new Set(links)), text];
-          });
+              return [Array.from(new Set(links)), text];
+            });
 
-          const entityMatches = config["namedEntities"].map((entity) => {
-            const regex = new RegExp(entity.regex, "g");
-            const matches = [...content.matchAll(regex)];
+            const entityMatches = config["namedEntities"].map((entity) => {
+              const regex = new RegExp(entity.regex, "g");
+              const matches = [...content.matchAll(regex)];
 
-            return matches.map((m) => ({
-              entityId: entity.entityId,
-              value: m[0],
-              count: 1,
-            }));
-          });
+              return matches.map((m) => ({
+                entityId: entity.entityId,
+                value: m[0],
+                count: 1,
+              }));
+            });
 
-          const matches = [].concat.apply([], entityMatches);
+            const matches = [].concat.apply([], entityMatches);
 
-          let response = Response.create({
-            success: {
-              requestId: request.crawl.requestId,
-              urls: links,
-              foundEntities: matches,
-            },
-          });
-
-          console.log(response);
-
-          let responseBytes = Response.encode(response);
-
-          producer.send(
-            [
-              {
-                topic: "crawler-responses",
-                messages: responseBytes,
+            let response = Response.create({
+              success: {
+                requestId: request.crawl.requestId,
+                urls: links,
+                foundEntities: matches,
               },
-            ],
-            function (err, data) {
-              if (err) throw err;
-              console.log("Pushed response to kafka.");
-            }
-          );
+            });
 
-          await browser.close();
+            console.log(response);
+
+            let responseBytes = Response.encode(response);
+
+            producer.send(
+              [
+                {
+                  topic: "crawler-responses",
+                  messages: responseBytes,
+                },
+              ],
+              function (err, data) {
+                if (err) throw err;
+                console.log("Pushed success response.");
+              }
+            );
+
+            await browser.close();
+          } catch (e) {
+            console.error(e);
+
+            let response = Response.create({
+              failure: {
+                requestId: request.crawl.requestId,
+              },
+            });
+
+            let responseBytes = Response.encode(response);
+
+            producer.send(
+              [
+                {
+                  topic: "crawler-responses",
+                  messages: responseBytes,
+                },
+              ],
+              function (err, data) {
+                if (err) throw err;
+                console.log("Pushed error response.");
+              }
+            );
+          }
         })();
       });
     });

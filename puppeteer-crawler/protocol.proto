@@ -1,0 +1,52 @@
+syntax = "proto2";
+package com.guys.coding.hackathon.proto.notifcation;
+
+// master -> slave
+
+message Query {
+    repeated string keywords = 1;
+    required Operator operator = 2;
+
+    enum Operator {
+        OR = 0;
+        AND = 1;
+    }
+}
+
+message Crawl {
+    required string requestId = 1;
+    required string url = 2;
+    optional Query query = 3;
+    required string jobId = 4;
+}
+
+message Request {
+    oneof is {
+        Crawl crawl = 1;
+    }
+}
+
+// slave -> master
+
+message EntityMatch {
+    required string entityId = 1;
+    required string value = 2;
+    required int32 count = 3;
+}
+
+message CrawlSuccess {
+    required string requestId = 1;
+    repeated string urls = 2;
+    repeated EntityMatch foundEntities = 3;
+}
+
+message CrawlFailure {
+    required string requestId = 1;
+}
+
+message Response {
+    oneof is {
+        CrawlSuccess success = 1;
+        CrawlFailure failure = 2;
+    }
+}
