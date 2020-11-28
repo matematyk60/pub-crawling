@@ -49,7 +49,8 @@ protobuf.load("../protocol/notification/protocol.proto", function (err, root) {
         return [Array.from(new Set(links)), text];
       });
 
-      console(config["namedEntities"]);
+      console.log(config);
+      console.log(config["namedEntities"]);
 
       // config["namedEntities"].map((entity) => {
       //   const regex = new RegExp(entity.regex);
