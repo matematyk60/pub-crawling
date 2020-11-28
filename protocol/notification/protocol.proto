@@ -3,9 +3,20 @@ package com.guys.coding.hackathon.proto.notifcation;
 
 // master -> slave
 
+message Query {
+    repeated string keywords = 1;
+    required Operator operator = 2;
+
+    enum Operator {
+        OR = 0;
+        AND = 1;
+    }
+}
+
 message Crawl {
     required string requestId = 1;
     required string url = 2;
+    optional Query query = 3;
 }
 
 message Request {
@@ -38,3 +49,4 @@ message Response {
         CrawlFailure failure = 2;
     }
 }
+

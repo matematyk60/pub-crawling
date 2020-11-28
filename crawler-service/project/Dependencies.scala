@@ -35,6 +35,7 @@ object Dependencies {
 
   private val miscDependencies = Seq(
     "io.codeheroes"        %% "commons-core" % CodeheroesCommonsVersion,
+    "io.codeheroes"        %% "commons-fs2"  % CodeheroesCommonsVersion,
     "com.github.mpilquist" %% "simulacrum"   % SimulacrumVersion,
     "com.typesafe"         % "config"        % TypesafeConfigVersion
   )

@@ -6,22 +6,23 @@ import com.guys.coding.hackathon.backend.domain.ResponseService
 import cats.effect.IO
 import com.guys.coding.hackathon.proto.notifcation._
 import cats.syntax.flatMap.toFlatMapOps
-import com.guys.coding.hackathon.proto.notifcation.Request.Is.Empty
+import com.guys.coding.hackathon.proto.notifcation.Response.Is.Empty
 
 class KafkaResponseService(topic: String, producer: KafkaProducer[IO, String, Array[Byte]])(implicit cs: ContextShift[IO])
     extends ResponseService[IO] {
 
-  override def send(request: Request): IO[Unit] = {
-    val record = ProducerRecords.one(requestProducerRecord(request))
+  override def send(response: Response): IO[Unit] = {
+    val record = ProducerRecords.one(responseProducerRecord(response))
     producer.produce(record).flatten.as(())
   }
 
-  private def requestProducerRecord(request: Request) =
-    ProducerRecord(topic, key = requestKey(request), value = request.toByteArray)
+  private def responseProducerRecord(response: Response) =
+    ProducerRecord(topic, key = responseKey(response), value = response.toByteArray)
 
-  private def requestKey(request: Request): String =
-    request.is match {
-      case Empty                   => throw new IllegalStateException("Empty")
-      case Request.Is.Crawl(crawl) => crawl.requestId
+  private def responseKey(response: Response): String =
+    response.is match {
+      case Empty                        => throw new IllegalStateException("Empty")
+      case Response.Is.Success(success) => success.requestId
+      case Response.Is.Failure(failure) => failure.requestId
     }
 }
