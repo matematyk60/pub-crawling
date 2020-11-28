@@ -27,7 +27,7 @@ import org.http4s.server.Router
 import org.http4s.server.blaze.BlazeServerBuilder
 import org.http4s.server.middleware.CORS
 import org.http4s.syntax.kleisli._
-import com.guys.coding.hackathon.backend.infrastructure.postgres.DoobieExampleRepository
+import com.guys.coding.hackathon.backend.infrastructure.postgres.DoobieJobRepository
 
 class Application(config: ConfigValues)(
     implicit ec: ExecutionContext,
@@ -55,7 +55,7 @@ class Application(config: ConfigValues)(
     } yield session
 
     for {
-      _ <- tx.trans.apply(DoobieExampleRepository.Statements.createTable.run)
+      _ <- tx.trans.apply(DoobieJobRepository.Statements.createTable.run)
       _ <- appLogger.info(s"Started server at ${config.app.bindHost}:${config.app.bindPort}")
       _ <- BlazeServerBuilder[IO]
             .bindHttp(config.app.bindPort, config.app.bindHost)
