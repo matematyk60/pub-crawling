@@ -35,23 +35,62 @@ class Neo4jTest extends AnyFlatSpec with Matchers {
       .use { s =>
         val repo = new Neo4jNodeRepository(s)
 
-        val entries = NonEmptyList.of(
-          (EntityId("phone"), EntityValue("123123123")),
-          (EntityId("email"), EntityValue("ala@makota.pl")),
-          (EntityId("PESEL"), EntityValue("99999999999999")),
-          (EntityId("VIN"), EntityValue("???VIN???")),
-          (EntityId("email"), EntityValue("ola@ula.pl"))
-        )
+        val run1 = {
+          val entries = NonEmptyList.of(
+            (EntityId("phone"), EntityValue("123123123")),
+            (EntityId("email"), EntityValue("ala@makota.pl")),
+            (EntityId("PESEL"), EntityValue("99999999999999")),
+            (EntityId("VIN"), EntityValue("???VIN???")),
+            (EntityId("email"), EntityValue("ola@ula.pl"))
+          )
 
-        val startId = JobId("start")
+          val startId = JobId("start")
+          for {
+            _ <- repo.insertNode(startId, 0, EntityId("query"), EntityValue("dzialaj start"))
+            _ <- repo.saveEdge(startId, entries, urls = urls)
+            _ <- IO(println("FINISH"))
+          } yield ()
+        }
+
+        val run2 = {
+
+          val entries = NonEmptyList.of(
+            (EntityId("phone"), EntityValue("123123123")),
+            (EntityId("email"), EntityValue("ala@makota.pl")),
+            (EntityId("PESEL"), EntityValue("4424242")),
+            (EntityId("VIN"), EntityValue("vini")),
+            (EntityId("email"), EntityValue("ola@a.pl"))
+          )
+
+          val startId = JobId("oldsdmsdsfdsxxxxxxxxxd")
+          for {
+            _ <- repo.insertNode(startId, 0, EntityId("query"), EntityValue("dzialaj prosze"))
+            _ <- repo.saveEdge(startId, entries, urls = urls)
+            _ <- IO(println("FINISH"))
+          } yield ()
+        }
+
+        val run3 = {
+          val entries = NonEmptyList.of(
+            (EntityId("phone"), EntityValue("444444")),
+            (EntityId("VIN"), EntityValue("vini"))
+          )
+
+          val startId = JobId("ola@a.pl")
+          for {
+            _ <- repo.insertNode(startId, 1, EntityId("email"), EntityValue("ola@a.pl"))
+            _ <- repo.saveEdge(startId, entries, urls = urls)
+            _ <- IO(println("FINISH"))
+          } yield ()
+        }
+
         for {
-          _ <- repo.insertNode(startId, EntityId("query"), EntityValue("IPHONE AND TANIO"))
-          _ <- repo.saveEdge(startId, entries, urls = urls)
-          _ <- IO(println("FINISH"))
+          _ <- run1
+          _ <- run2
+          _ <- run3
         } yield ()
 
-      }
-      .unsafeRunSync()
+      }.unsafeRunSync()
 
   }
 
