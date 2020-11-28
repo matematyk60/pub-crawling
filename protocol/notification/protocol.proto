@@ -34,13 +34,6 @@ message EntityMatch {
     required int32 count = 3;
 }
 
-message EntityMatch {
-    required string entityId = 1;
-    required string value = 2;
-    required string count = 3;
-}
-
-
 message CrawlSuccess {
     required string requestId = 1;
     repeated string urls = 2;
@@ -57,4 +50,3 @@ message Response {
         CrawlFailure failure = 2;
     }
 }
-
