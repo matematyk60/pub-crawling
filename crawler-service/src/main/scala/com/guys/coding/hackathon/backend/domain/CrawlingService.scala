@@ -15,7 +15,8 @@ import com.guys.coding.hackathon.proto.notifcation.Query.Operator
 
 object CrawlingService {
 
-  private val urlRegex = """[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)"""
+  private val urlRegex           = raw"""[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)""".r
+  private val unwantedExtensions = Set("ico", "png", "jpg", "jpeg", "xml", "js")
 
   def crawl[F[_]: Monad](requestId: String, query: Option[Query], url: String, config: CrawlingConfig)(
       implicit client: Client[F],
@@ -63,7 +64,24 @@ object CrawlingService {
     }
   }
 
-  private def findLinks(html: String): List[String] = List.empty
+  // TODO: filter out 49.99
+  // TODO: handle local links       
+  // TODO: unify domain case        (master?)
+  // TODO: unify http / https / www (master?)
+
+  private def findLinks(html: String): List[String] = {
+    urlRegex
+      .findAllIn(html)
+      .map(dropLastSlash)
+      .distinct
+      .filterNot(url => unwantedExtensions.exists(url.endsWith))
+      .filterNot(_.size < 5)
+      .toList
+  }
+
+  private def dropLastSlash(url: String) =
+    if (url.endsWith("/")) url.init
+    else url
 
   // TODO: implement
   private def findEntities[F[_]: Applicative](html: String, config: CrawlingConfig): F[List[EntityMatch]] =

@@ -31,7 +31,7 @@ producer = KafkaProducer(bootstrap_servers="localhost:9092")
 #+begin_src ipython :session
 request = proto.Request()
 request.crawl.requestId = "1234"
-request.crawl.url = "duckduckgo.com/?q=test"
+request.crawl.url = "https://duckduckgo.com/html?q=test"
 request.crawl.jobId = "1234"
 request.crawl.query.keywords.append("test")
 request.crawl.query.operator = proto.Query.Operator.OR
@@ -40,5 +40,5 @@ producer.send(topic, request.SerializeToString()).get(timeout=60)
 #+end_src
 
 #+RESULTS:
-: # Out[33]:
-: : RecordMetadata(topic='crawler-requests', partition=0, topic_partition=TopicPartition(topic='crawler-requests', partition=0), offset=2, timestamp=1606569574230, checksum=3017464133, serialized_key_size=-1, serialized_value_size=48, serialized_header_size=-1)
+: # Out[38]:
+: : RecordMetadata(topic='crawler-requests', partition=2, topic_partition=TopicPartition(topic='crawler-requests', partition=2), offset=5, timestamp=1606574096229, checksum=2992321944, serialized_key_size=-1, serialized_value_size=60, serialized_header_size=-1)

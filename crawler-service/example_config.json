@@ -1,4 +1,13 @@
 {
-    "namedEntities": [],
+    "namedEntities": [
+	{
+	    "entityId": "email",
+	    "regex": ""
+	},
+	{
+	    "entityId": "phone_number",
+	    "regex": ""
+	}
+    ],
     "discardedJobs": []
 }

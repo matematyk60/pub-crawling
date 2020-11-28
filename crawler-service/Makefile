@@ -2,7 +2,7 @@ protobuf_dest=protobufs
 protobuf_source=../protocol
 
 run:
-	REDIS_HOST=localhost bl -r
+	REDIS_HOST=localhost bl -n -r
 
 python_proto: 
 	rm -rf generated $(protobuf_dest)

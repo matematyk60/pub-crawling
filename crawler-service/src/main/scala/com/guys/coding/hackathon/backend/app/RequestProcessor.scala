@@ -20,6 +20,7 @@ import cats.syntax.apply._
 import com.guys.coding.hackathon.backend.domain.ConfigService
 import com.guys.coding.hackathon.backend.domain.CrawlingService
 import com.guys.coding.hackathon.backend.domain.ResponseService
+import pprint.pprintln
 
 object RequestProcessor extends LoggingSupport {
 
@@ -76,9 +77,11 @@ object RequestProcessor extends LoggingSupport {
               case Some(config) =>
                 CrawlingService.crawl[F](crawl.requestId, crawl.query, crawl.url, config).flatMap {
                   case Right(success) =>
+                    pprintln(success)
                     ResponseService[F].send(Response(Response.Is.Success(success)))
 
                   case Left(failure) =>
+                    pprintln(failure)
                     ResponseService[F].send(Response(Response.Is.Failure(failure)))
                 }
 

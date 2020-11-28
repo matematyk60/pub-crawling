@@ -18,6 +18,8 @@ object Dependencies {
   val RedisVersion    = "1.9.0"
   val Fs2KafkaVersion = "1.0.0"
 
+  val PprintVersion = "0.5.7"
+
   private val http4sDependencies = Seq(
     "org.http4s" %% "http4s-blaze-client" % Http4sVersion,
     "org.http4s" %% "http4s-blaze-server" % Http4sVersion,
@@ -38,7 +40,8 @@ object Dependencies {
     "io.codeheroes"        %% "commons-core" % CodeheroesCommonsVersion,
     "io.codeheroes"        %% "commons-fs2"  % CodeheroesCommonsVersion,
     "com.github.mpilquist" %% "simulacrum"   % SimulacrumVersion,
-    "com.typesafe"         % "config"        % TypesafeConfigVersion
+    "com.typesafe"         % "config"        % TypesafeConfigVersion,
+    "com.lihaoyi"          %% "pprint"       % PprintVersion
   )
 
   private val redisDependencies = Seq(
