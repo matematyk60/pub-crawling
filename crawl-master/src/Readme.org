@@ -79,6 +79,9 @@ match (m) return m;
 create(e:Entity{jobId:"job1",entityId: "IPHONE and Tanio", entityValue: "query"});
 
 
+create(e:Entity{jobId:"job1",entityId: "IPHONE and Tanio", entityValue: "query", urls: ["dupa", "bladab"]});
+
+
 
       // BCM increment count
 

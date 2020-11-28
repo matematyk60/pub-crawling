@@ -45,7 +45,7 @@ object CrawlingService {
       jobId       <- IdProvider[F].newId()
       currentTime <- TimeProvider[F].currentTime()
       job         = Job(JobId(jobId), parentJob = None, jobDepth = 0, "name1", currentTime, operator_, phrases, jobIterations)
-      _           <- EntityService[F].insertQueryNode(job.id, EntityValue(operator + " " + phrases.reduceOption(_ + _).getOrElse("")))
+      _           <- EntityService[F].insertQueryNode(job.id, EntityValue(operator + " (" + phrases.reduceOption(_ + " " + _).getOrElse("") + ")"))
       _           <- DoobieJobRepository[F].createJob(job)
       urls        = List(googleUrl(phrases), duckDuckGoUrl(phrases))
       requests <- urls.traverse(url =>

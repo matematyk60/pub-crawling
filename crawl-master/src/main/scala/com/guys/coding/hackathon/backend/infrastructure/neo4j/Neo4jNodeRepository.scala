@@ -46,9 +46,10 @@ class Neo4jNodeRepository(session: Session[IO]) {
         c"""
       match(e:Entity{jobId:${from.value}})
           merge (e)-[r:coexists]-> (to:Entity {entityId: ${id.value}, entityValue:${value.value}, name : ${value.value}})
-          ON CREATE SET r.counter = ${urls.size}
+          ON CREATE SET r.counter = ${urls.size}, r.urls = ${urls}
           ON MATCH SET
-          r.counter = coalesce(r.counter, 0) + ${urls.size};
+          r.counter = coalesce(r.counter, 0) + ${urls.size},
+          r.urls = r.urls + ${urls}
     """.query[Unit].single(session)
     }.void
 
