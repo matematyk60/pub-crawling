@@ -14,6 +14,14 @@ import com.guys.coding.hackathon.backend.infrastructure.jwt.JwtTokenService
 import com.guys.coding.hackathon.backend.infrastructure.postgres.Database
 import hero.common.logging.Logger
 import hero.common.logging.slf4j.LoggingConfigurator
+
+import cats.effect.{IO, Resource}
+import fs2.Stream
+import neotypes.{GraphDatabase, Session}
+import neotypes.cats.effect.implicits._   // Brings the implicit Async[IO] instance into the scope.
+import neotypes.implicits.syntax.string._ // Provides the query[T] extension method.
+import org.neo4j.driver.AuthTokens
+
 import hero.common.util.LoggingExt
 import org.http4s.server.Router
 import org.http4s.server.blaze.BlazeServerBuilder
@@ -39,6 +47,12 @@ class Application(config: ConfigValues)(
     val routes = Router(
       "/graphql" -> new GraphqlRoute(services).route
     ).orNotFound
+
+    val neo = config.neo4j
+    val session: Resource[IO, Session[IO]] = for {
+      driver  <- GraphDatabase.driver[IO](neo.url, AuthTokens.basic(neo.username, neo.password))
+      session <- driver.session
+    } yield session
 
     for {
       _ <- tx.trans.apply(DoobieExampleRepository.Statements.createTable.run)
