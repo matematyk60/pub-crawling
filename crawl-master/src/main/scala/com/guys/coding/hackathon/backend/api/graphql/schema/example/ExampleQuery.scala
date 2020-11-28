@@ -6,7 +6,7 @@ import hero.common.sangria.pagination.{PaginationArgs, PaginationTypes}
 import sangria.schema._
 import com.guys.coding.hackathon.backend.domain.ExampleService
 import cats.effect.IO
-import com.guys.coding.hackathon.backend.infrastructure.postgres.DoobieExampleRepository
+import com.guys.coding.hackathon.backend.infrastructure.postgres.DoobieJobRepository
 import doobie.util.transactor.Transactor
 
 class ExampleQuery(exampleService: ExampleService[IO], tx: Transactor[IO]) extends QueryHolder {
@@ -46,7 +46,7 @@ class ExampleQuery(exampleService: ExampleService[IO], tx: Transactor[IO]) exten
         {
           tx.trans
             .apply(
-              DoobieExampleRepository.getUsers()
+              DoobieJobRepository.getUsers()
             )
             .unsafeToFuture()
         }
