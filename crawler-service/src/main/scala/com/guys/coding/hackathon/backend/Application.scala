@@ -55,7 +55,7 @@ class Application(config: ConfigValues)(
   def start(): IO[Unit] = {
     val resources =
       for {
-        client     <- BlazeClientBuilder[IO](ec).resource
+        client     <- BlazeClientBuilder[IO](ec).withMaxTotalConnections(512).withMaxWaitQueueLimit(1024).resource
         responseKP <- producerResource(KafkaResponseService.producerSettings(config.kafka.bootstrapServers))
       } yield (client, responseKP)
 

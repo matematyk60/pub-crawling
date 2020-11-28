@@ -2,11 +2,15 @@
     "namedEntities": [
 	{
 	    "entityId": "email",
-	    "regex": "[^@ \t\r\n]+@[^@ \t\r\n]+\.[^@ \t\r\n]+"
+	    "regex": "^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$"
 	},
 	{
 	    "entityId": "phone_number",
 	    "regex": "^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,6}$"
+	},
+	{
+	    "entityId": "agnieszka",
+	    "regex": "agnieszka"
 	}
     ],
     "discardedJobs": []

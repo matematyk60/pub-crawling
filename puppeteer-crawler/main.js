@@ -7,6 +7,7 @@ protobuf.load("../protocol/notification/protocol.proto", function (err, root) {
   if (err) throw err;
 
   let Request = root.lookupType("Request");
+  let Response = root.lookupType("Response");
 
   const kafkaClient = new kafka.KafkaClient();
   const redisClient = redis.createClient();
@@ -25,40 +26,49 @@ protobuf.load("../protocol/notification/protocol.proto", function (err, root) {
     }
   );
 
+  const producer = new kafka.Producer(kafkaClient);
+
   consumer.on("message", function (message) {
     const request = Request.decode(message.value);
-    const config = JSON.parse(redisClient.get("crawling-config"));
-    const url = request.crawl.url;
 
-    (async () => {
-      const browser = await puppeteer.launch({});
-      const page = await browser.newPage();
+    redisClient.get("crawling-config", function (err, rawConfig) {
+      if (err) throw err;
 
-      await page.goto(url, { waitUntil: "load" });
+      const config = JSON.parse(rawConfig);
+      const url = request.crawl.url;
 
-      const [links, content] = await page.evaluate(() => {
-        let links = [];
-        let l = document.links;
+      (async () => {
+        const browser = await puppeteer.launch({});
+        const page = await browser.newPage();
 
-        for (var i = 0; i < l.length; i++) {
-          links.push(l[i].href);
-        }
+        await page.goto(url, { waitUntil: "load" });
 
-        const text = document.body.textContent;
+        const [links, content] = await page.evaluate(() => {
+          let links = [];
+          let l = document.links;
 
-        return [Array.from(new Set(links)), text];
-      });
+          for (var i = 0; i < l.length; i++) {
+            links.push(l[i].href);
+          }
 
-      console.log(config);
-      console.log(config["namedEntities"]);
+          const text = document.body.textContent.toString();
 
-      // config["namedEntities"].map((entity) => {
-      //   const regex = new RegExp(entity.regex);
-      // });
+          return [Array.from(new Set(links)), text];
+        });
 
-      console.log(links);
+        config["namedEntities"].map((entity) => {
+          console.log(content);
+          const regex = new RegExp(entity.regex, "g");
+          const matches = [...content.matchAll(regex)];
+          // .map((m) => m[0]);
 
-      await browser.close();
-    })();
+          console.log(matches);
+
+          return matches;
+        });
+
+        await browser.close();
+      })();
+    });
   });
 });

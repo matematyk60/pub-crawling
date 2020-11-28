@@ -9,12 +9,13 @@ import com.guys.coding.hackathon.backend.infrastructure.crawler.HttpClient
 import cats.Applicative
 import cats.syntax.flatMap.toFlatMapOps
 import cats.syntax.functor.toFunctorOps
-import cats.Monad
 import com.guys.coding.hackathon.proto.notifcation.EntityMatch
 import com.guys.coding.hackathon.proto.notifcation.Query.Operator
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.select.Elements
+import cats.MonadError
+import hero.common.logging.Logger
 
 object CrawlingService {
 
@@ -27,7 +28,7 @@ object CrawlingService {
   //   println(demo.text())
   // }
 
-  def crawl[F[_]: Monad](requestId: String, query: Option[Query], url: String, config: CrawlingConfig)(
+  def crawl[F[_]: MonadError[*[_], Throwable]: Logger](requestId: String, query: Option[Query], url: String, config: CrawlingConfig)(
       implicit client: Client[F],
       ed: EntityDecoder[F, String]
   ): F[Either[CrawlFailure, CrawlSuccess]] = {
@@ -125,15 +126,28 @@ object CrawlingService {
       config.namedEntities.flatMap { entity =>
         val regex = entity.regex.r
 
-        regex.findAllIn(htmlText).toList.map { m =>
-          EntityMatch(
-            entityId = entity.entityId,
-            value = m,
-            count = 1 // TODO: groupby?
-          )
-        }
+        regex
+          .findAllIn(htmlText)
+          .toList
+          .map { m =>
+            EntityMatch(
+              entityId = entity.entityId,
+              value = m,
+              count = 1
+            )
+          }
+          .groupBy(e => (e.entityId, e.value.toLowerCase()))
+          .map {
+            case ((entityId, value), entities) =>
+              EntityMatch(
+                entityId = entityId,
+                value = value,
+                count = entities.size
+              )
+
+          }
       }
     }
-  }
 
+  }
 }
