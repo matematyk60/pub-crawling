@@ -54,16 +54,6 @@ object ExampleTypes {
               DoobieRequestRepository.jobRequests(ctx.value.id)
             )
             .unsafeToFuture()
-      ),
-      Field(
-        "initialRequest",
-        OptionType(RequestType),
-        resolve = ctx =>
-          ctx.ctx.services.tx.trans
-            .apply(
-              DoobieRequestRepository.get(ctx.value.initialRequestId)
-            )
-            .unsafeToFuture()
       )
     )
   )
