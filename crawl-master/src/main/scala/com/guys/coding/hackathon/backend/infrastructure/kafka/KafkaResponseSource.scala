@@ -37,5 +37,3 @@ object KafkaResponseSource {
   def deserializer[F[_]: Sync]: Deserializer[F, Response] =
     Deserializer.lift(bytes => Sync[F].delay(Response.parseFrom(bytes)))
 }
-
-

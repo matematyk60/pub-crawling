@@ -9,7 +9,6 @@ import cats.tagless.{Derive, FunctorK}
 import com.guys.coding.hackathon.backend.domain.JobId
 import com.guys.coding.hackathon.backend.domain.RequestId
 import com.guys.coding.hackathon.backend.infrastructure.postgres.DoobieRequestRepository.Request
-import com.guys.coding.hackathon.proto.notifcation.Query.Operator
 import doobie.implicits._
 import doobie.implicits.javasql.TimestampMeta
 import doobie.util.update.Update

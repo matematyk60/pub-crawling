@@ -42,15 +42,15 @@ object DoobieJobRepository extends DoobieJobRepository[ConnectionIO] {
 
   private val makeJob: (String, Option[String], Int, String, Timestamp, String, List[String], Int) => Job = {
     case (
-      jobId,
-      parentJobId,
-      depth,
-      name,
-      time,
-      operator,
-      phrases,
-      iterations
-      ) =>
+        jobId,
+        parentJobId,
+        depth,
+        name,
+        time,
+        operator,
+        phrases,
+        iterations
+        ) =>
       Job(
         JobId(jobId),
         parentJobId.map(JobId),

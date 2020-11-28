@@ -11,14 +11,13 @@ import cats.effect.Timer
 import com.guys.coding.hackathon.backend.api.graphql.core.GraphqlRoute
 import com.guys.coding.hackathon.backend.domain.ExampleService
 import com.guys.coding.hackathon.backend.infrastructure.jwt.JwtTokenService
-import com.guys.coding.hackathon.backend.infrastructure.postgres.{Database, DoobieJobRepository, DoobieRequestRepository, transactions}
+import com.guys.coding.hackathon.backend.infrastructure.postgres.{transactions, Database, DoobieJobRepository, DoobieRequestRepository}
 import hero.common.logging.Logger
 import hero.common.logging.slf4j.LoggingConfigurator
 import cats.effect.{IO, Resource}
 import cats.implicits.catsSyntaxTuple2Parallel
 import com.guys.coding.hackathon.backend.infrastructure.kafka.{KafkaRequestService, KafkaResponseSource}
 import neotypes.{GraphDatabase, Session}
-import neotypes.cats.effect.implicits._
 import neotypes.cats.effect.implicits._
 import dev.profunktor.redis4cats.effect.Log.Stdout._
 import org.neo4j.driver.AuthTokens
@@ -47,11 +46,11 @@ class Application(config: ConfigValues)(
   LoggingConfigurator.setRootLogLevel(config.app.rootLogLevel)
   LoggingConfigurator.setLogLevel("com.guys.coding.hackathon.backend", config.app.appLogLevel)
 
-  private val privateKey: PrivateKey = null //PrivateKeyReader.get(config.authKeys.privatePath)
-  private val publicKey: PublicKey   = null //PublicKeyReader.get(config.authKeys.publicPath)
-  private val jwtTokenService        = new JwtTokenService(publicKey, privateKey)
+  private val privateKey: PrivateKey                  = null //PrivateKeyReader.get(config.authKeys.privatePath)
+  private val publicKey: PublicKey                    = null //PublicKeyReader.get(config.authKeys.publicPath)
+  private val jwtTokenService                         = new JwtTokenService(publicKey, privateKey)
   implicit private val timeProvider: TimeProvider[IO] = TimeProvider.io(Clock.systemUTC())
-  implicit private val idProvider: IdProvider[IO] = IdProvider.io
+  implicit private val idProvider: IdProvider[IO]     = IdProvider.io
   implicit private val kafkaResponseSource =
     new KafkaResponseSource[IO]("master", UUID.randomUUID().toString, config.kafkaBootstrapServers, "responses")
   def start(): IO[Unit] = Database.transactor(config.postgres).use { tx =>
@@ -88,7 +87,7 @@ class Application(config: ConfigValues)(
           _ <- tx.trans.apply(DoobieJobRepository.Statements.createTable.run)
           _ <- tx.trans.apply(DoobieRequestRepository.Statements.createTable.run)
           _ <- appLogger.info(s"Started server at ${config.app.bindHost}:${config.app.bindPort}")
-          val run = (
+          run = (
             BlazeServerBuilder[IO]
               .bindHttp(config.app.bindPort, config.app.bindHost)
               .withHttpApp(CORS(routes))
@@ -97,7 +96,7 @@ class Application(config: ConfigValues)(
               .drain,
             ResponseProcessor.run[IO].compile.drain
           ).parTupled
-        _ <- run
+          _ <- run
         } yield ()
     }
 

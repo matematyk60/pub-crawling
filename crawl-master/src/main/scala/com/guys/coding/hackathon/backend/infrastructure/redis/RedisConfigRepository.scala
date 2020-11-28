@@ -1,9 +1,7 @@
 package com.guys.coding.hackathon.backend.infrastructure.redis
 
-import cats.effect.IO
 import com.guys.coding.hackathon.backend.domain.{EntityConfig, GlobalConfig}
-import dev.profunktor.redis4cats.{Redis, RedisCommands}
-import dev.profunktor.redis4cats.connection.RedisClient
+import dev.profunktor.redis4cats.RedisCommands
 import io.circe.Encoder
 import io.circe.syntax.EncoderOps
 import io.circe.generic.semiauto.deriveEncoder

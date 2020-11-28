@@ -22,7 +22,7 @@ class ExampleMutation(
     timeProvider: TimeProvider[IO],
     kafkaRequestService: KafkaRequestService[IO],
     dJ: DoobieJobRepository[IO],
-dRR: DoobieRequestRepository[IO],
+    dRR: DoobieRequestRepository[IO],
     rcR: RedisConfigRepository[IO]
 ) extends MutationHolder {
 
