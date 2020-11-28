@@ -31,7 +31,9 @@ producer = KafkaProducer(bootstrap_servers="localhost:9092")
 #+begin_src ipython :session
 request = proto.Request()
 request.crawl.requestId = "1234"
-request.crawl.url = "https://duckduckgo.com/html?q=test"
+request.crawl.url = "https://duckduckgo.com/html?q=test%20!g"
+# request.crawl.url = "https://allegro.pl/oferta/hantle-30kg-2x15kg-2x-hantla-zestaw-hantli-2x-gryf-9761358403?bi_s=ads&bi_m=listing%3Adesktop%3Acategory&bi_c=MmZmMmI5YjAtYWI4MS00NjEzLTlmODQtY2VmMmE0NDJlMzRhAA&bi_t=ape&referrer=proxy&emission_unit_id=9e0f322b-f88a-412d-8390-fa2ea74c0aae#aboutSeller"
+# request.crawl.url = "https://aproszewska.com/"
 request.crawl.jobId = "1234"
 request.crawl.query.keywords.append("test")
 request.crawl.query.operator = proto.Query.Operator.OR
@@ -40,5 +42,5 @@ producer.send(topic, request.SerializeToString()).get(timeout=60)
 #+end_src
 
 #+RESULTS:
-: # Out[40]:
-: : RecordMetadata(topic='crawler-requests', partition=0, topic_partition=TopicPartition(topic='crawler-requests', partition=0), offset=6, timestamp=1606574555841, checksum=2957717592, serialized_key_size=-1, serialized_value_size=60, serialized_header_size=-1)
+: # Out[57]:
+: : RecordMetadata(topic='crawler-requests', partition=3, topic_partition=TopicPartition(topic='crawler-requests', partition=3), offset=7, timestamp=1606585213182, checksum=2454809059, serialized_key_size=-1, serialized_value_size=65, serialized_header_size=-1)

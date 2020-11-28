@@ -19,6 +19,7 @@ object Dependencies {
   val Fs2KafkaVersion = "1.0.0"
 
   val PprintVersion = "0.5.7"
+  val JsoupVersion  = "1.13.1"
 
   private val http4sDependencies = Seq(
     "org.http4s" %% "http4s-blaze-client" % Http4sVersion,
@@ -44,6 +45,10 @@ object Dependencies {
     "com.lihaoyi"          %% "pprint"       % PprintVersion
   )
 
+  private val jsoupDependencies = Seq(
+    "org.jsoup" % "jsoup" % JsoupVersion
+  )
+
   private val redisDependencies = Seq(
     "com.github.etaty" %% "rediscala" % RedisVersion
   )
@@ -60,6 +65,7 @@ object Dependencies {
     http4sDependencies,
     grpcDependencies,
     redisDependencies,
+    jsoupDependencies,
     kafkaDependencies,
     testDependencies,
     miscDependencies
