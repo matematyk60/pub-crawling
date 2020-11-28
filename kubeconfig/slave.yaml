@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: backend-slave
 spec:
-  replicas: 1
+  replicas: 4
   selector:
     matchLabels:
       app: backend-slave
@@ -13,7 +13,7 @@ spec:
         app: backend-slave
     spec:
       containers:
-        - image: porcupine96/crawler-service:0.0
+        - image: porcupine96/crawler-service:0.1
           name: backend-slave
           env:
             - name: REDIS_PORT

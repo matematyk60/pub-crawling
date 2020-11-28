@@ -46,7 +46,7 @@ class Application(config: ConfigValues)(
 
   implicit val requestSource: KafkaSource[IO, Request] =
     new KafkaRequestSource(
-      groupId = "crawler-service",
+      groupId = "crawler-service2",
       clientId = ju.UUID.randomUUID().toString,
       bootstrapServers = config.kafka.bootstrapServers,
       topic = "crawler-requests"
