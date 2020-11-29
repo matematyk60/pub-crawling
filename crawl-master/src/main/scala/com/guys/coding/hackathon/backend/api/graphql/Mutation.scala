@@ -14,7 +14,6 @@ class Mutation(services: Services) {
   private val mutationHolders =
     List[MutationHolder](
       new ExampleMutation()(
-        services.exampleService,
         IdProvider.io,
         TimeProvider.io(Clock.systemUTC()),
         services.kafkaRequestService,

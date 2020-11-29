@@ -15,7 +15,6 @@ import com.guys.coding.hackathon.backend.infrastructure.neo4j.Neo4jNodeRepositor
 class Neo4jNodeRepository(session: Session[IO]) {
   // import com.guys.coding.hackathon.backend.infrastructure.neo4j.Neo4jNodeRepository.{enitityToMapper, EntityTo}
 
-  // TODO:bcm  connect entity to request
   // https://neotypes.github.io/neotypes/
   // NOTE: neotypes.generic is scheduled for 0.16.0, now use  neotypes.implicits.mappers.all._ instead.
 

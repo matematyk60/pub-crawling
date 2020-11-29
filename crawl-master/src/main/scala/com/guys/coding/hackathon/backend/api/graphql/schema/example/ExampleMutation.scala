@@ -5,7 +5,6 @@ import com.guys.coding.hackathon.backend.api.graphql.schema.MutationHolder
 import com.guys.coding.hackathon.backend.api.graphql.service.GraphqlSecureContext
 import com.guys.coding.hackathon.backend.app.CrawlingService
 import com.guys.coding.hackathon.backend.domain.EntityService
-import com.guys.coding.hackathon.backend.domain.ExampleService
 import com.guys.coding.hackathon.backend.domain.JobId
 import com.guys.coding.hackathon.backend.infrastructure.kafka.KafkaRequestService
 import com.guys.coding.hackathon.backend.infrastructure.postgres.DoobieJobRepository
@@ -18,7 +17,7 @@ import sangria.marshalling.circe._
 import sangria.schema._
 
 class ExampleMutation(
-    implicit exampleService: ExampleService[IO],
+    implicit
     idProvider: IdProvider[IO],
     timeProvider: TimeProvider[IO],
     kafkaRequestService: KafkaRequestService[IO],
@@ -27,10 +26,6 @@ class ExampleMutation(
     rcR: RedisConfigRepository[IO],
     entityService: EntityService[IO]
 ) extends MutationHolder {
-
-  import ExampleTypes._
-
-  val ExampleArg = Argument("example", ExampleInputType)
 
   override def mutationFields(): List[Field[GraphqlSecureContext, Unit]] =
     fields[GraphqlSecureContext, Unit](
