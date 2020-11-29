@@ -46,7 +46,7 @@ object ResponseProcessor {
                              )
 
               replacedFoundEntities = foundEntities.map {
-                case e @ EntityMatch("phoneNumber", _, _, _) => e.copy(value = e.value.filterNot(_.isDigit))
+                case e @ EntityMatch("phoneNumber", _, _, _) => e.copy(value = e.value.filter(_.isDigit))
                 case e => e
               }
               _ <- OptionT.liftF(EntityService[F].saveReturning(job.id, entries = replacedFoundEntities, urls = urls))
