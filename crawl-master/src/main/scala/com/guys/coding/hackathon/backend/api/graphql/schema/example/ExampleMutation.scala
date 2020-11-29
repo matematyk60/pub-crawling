@@ -43,6 +43,7 @@ class ExampleMutation(
         val bitcoinAddressEnabled    = Argument("bitcoinAddressEnabled", BooleanType)
         val ssnNumberEnabled         = Argument("ssnNumberEnabled", BooleanType)
         val creditCardEnabled        = Argument("creditCardEnabled", BooleanType)
+        val selectedDomains          = Argument("selectedDomains", ListInputType(StringType))
 
         Field(
           "startCrawling",
@@ -51,6 +52,7 @@ class ExampleMutation(
             bitcoinAddressEnabled ::
             ssnNumberEnabled ::
             creditCardEnabled ::
+          selectedDomains ::
             Nil,
           resolve = c => {
             CrawlingService
@@ -62,7 +64,8 @@ class ExampleMutation(
                 phoneNumberEntityEnabled = c.arg(phoneNumberEntityEnabled),
                 bitcoinAddressEnabled = c.arg(bitcoinAddressEnabled),
                 ssnNumberEnabled = c.arg(ssnNumberEnabled),
-                creditCardEnabled = c.arg(creditCardEnabled)
+                creditCardEnabled = c.arg(creditCardEnabled),
+                selectedDomains = c.arg(selectedDomains).toList
               )
               .map(_.value)
               .unsafeToFuture()
@@ -77,6 +80,7 @@ class ExampleMutation(
         val bitcoinAddressEnabled    = Argument("bitcoinAddressEnabled", BooleanType)
         val ssnNumberEnabled         = Argument("ssnNumberEnabled", BooleanType)
         val creditCardEnabled        = Argument("creditCardEnabled", BooleanType)
+        val selectedDomains          = Argument("selectedDomains", ListInputType(StringType))
 
         Field(
           "crawlChoosenEntities",
@@ -96,10 +100,22 @@ class ExampleMutation(
                 phoneNumberEntityEnabled = c.arg(phoneNumberEntityEnabled),
                 bitcoinAddressEnabled = c.arg(bitcoinAddressEnabled),
                 ssnNumberEnabled = c.arg(ssnNumberEnabled),
-                creditCardEnabled = c.arg(creditCardEnabled)
+                creditCardEnabled = c.arg(creditCardEnabled),
+                selectedDomains = c.arg(selectedDomains).toList
               )
               .map(r => r.map(_.value))
               .unsafeToFuture()
+          }
+        )
+      }, {
+        val jobId = Argument("jobId", StringType)
+
+        Field(
+          "stopCrawling",
+          StringType,
+          arguments = jobId :: Nil,
+          resolve = c => {
+            CrawlingService.cancelJob[IO](JobId(c.arg(jobId))).map(_ => c.arg(jobId)).unsafeToFuture()
           }
         )
       }

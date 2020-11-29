@@ -1,6 +1,7 @@
 package com.guys.coding.hackathon.backend.app
 
 import cats.Monad
+import cats.data.OptionT
 import hero.common.util.IdProvider
 import cats.syntax.functor.toFunctorOps
 import cats.syntax.flatMap.toFlatMapOps
@@ -20,14 +21,18 @@ import com.guys.coding.hackathon.proto.notifcation.Query.Operator
 
 object CrawlingService {
 
-  def duckDuckGoUrl(phrases: List[String]): String = {
-    val search = phrases.map(phrase => s"""$phrase""").mkString(" ")
-    s"http://duckduckgo.com/html?q=${java.net.URLEncoder.encode(search)}"
+  def duckDuckGoUrls(phrases: List[String], selectedDomains: List[String]): List[String] = {
+    val search      = phrases.map(phrase => s"""$phrase""").mkString(" ")
+    val fromDomains = selectedDomains.map(domain => s"http://duckduckgo.com/html?q=${java.net.URLEncoder.encode(s"$search site:$domain")}")
+    if (fromDomains.isEmpty) List(s"http://duckduckgo.com/html?q=${java.net.URLEncoder.encode(search)}")
+    else fromDomains
   }
 
-  def googleUrl(phrases: List[String]): String = {
-    val search = phrases.map(phrase => s"""$phrase""").mkString(" ")
-    s"http://duckduckgo.com/html?q=${java.net.URLEncoder.encode(search)}!g"
+  def googleUrls(phrases: List[String], selectedDomains: List[String]): List[String] = {
+    val search      = phrases.map(phrase => s"""$phrase""").mkString(" ")
+    val fromDomains = selectedDomains.map(domain => s"http://duckduckgo.com/html?q=${java.net.URLEncoder.encode(s"$search site:$domain")}!g")
+    if (fromDomains.isEmpty) List(s"http://duckduckgo.com/html?q=${java.net.URLEncoder.encode(search)}!g")
+    else fromDomains
   }
 
   def startFromPhrases[F[_]: EntityService: Monad: IdProvider: TimeProvider: KafkaRequestService: DoobieJobRepository: DoobieRequestRepository: RedisConfigRepository](
@@ -38,7 +43,8 @@ object CrawlingService {
       phoneNumberEntityEnabled: Boolean,
       bitcoinAddressEnabled: Boolean,
       ssnNumberEnabled: Boolean,
-      creditCardEnabled: Boolean
+      creditCardEnabled: Boolean,
+      selectedDomains: List[String]
   ): F[JobId] = {
     val operator_ = operator.toLowerCase match {
       case "or" => Query.Operator.OR
@@ -54,7 +60,8 @@ object CrawlingService {
             EntityValue(operator + " (" + phrases.reduceOption(_ + " " + _).getOrElse("") + ")")
           )
       _    <- DoobieJobRepository[F].createJob(job)
-      urls = List(googleUrl(phrases), duckDuckGoUrl(phrases))
+      _ <- RedisConfigRepository[F].saveJobSelectedDomains(JobId(jobId), selectedDomains)
+      urls = List(googleUrls(phrases, selectedDomains), duckDuckGoUrls(phrases, selectedDomains)).flatten
       requests <- urls.traverse(url =>
                    for {
                      requestId <- IdProvider[F].newId()
@@ -77,6 +84,12 @@ object CrawlingService {
     } yield JobId(jobId)
   }
 
+  def cancelJob[F[_]: Monad: RedisConfigRepository](jobId: JobId): F[Unit] =
+    (for {
+      config <- OptionT(RedisConfigRepository[F].getConfig())
+      _      <- OptionT.liftF(RedisConfigRepository[F].saveConfig(config.copy(discardedJobs = config.discardedJobs :+ jobId.value)))
+    } yield ()).value.void
+
   def crawlFromEntities[F[_]: EntityService: Monad: IdProvider: TimeProvider: KafkaRequestService: DoobieJobRepository: DoobieRequestRepository: RedisConfigRepository](
       jobId: JobId,
       choosenEntityValues: List[String],
@@ -85,7 +98,8 @@ object CrawlingService {
       phoneNumberEntityEnabled: Boolean,
       bitcoinAddressEnabled: Boolean,
       ssnNumberEnabled: Boolean,
-      creditCardEnabled: Boolean
+      creditCardEnabled: Boolean,
+      selectedDomains: List[String]
   ): F[List[JobId]] = {
     for {
       currentTime <- TimeProvider[F].currentTime()
@@ -128,7 +142,7 @@ object CrawlingService {
 
                      _ <- DoobieJobRepository[F].createJob(job)
 
-                     urls = List(googleUrl(phrases), duckDuckGoUrl(phrases))
+                     urls = List(googleUrls(phrases, selectedDomains), duckDuckGoUrls(phrases, selectedDomains)).flatten
 
                      requests <- urls.traverse(url =>
                                   for {

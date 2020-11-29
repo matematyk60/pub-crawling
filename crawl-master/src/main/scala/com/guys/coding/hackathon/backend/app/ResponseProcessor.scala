@@ -17,10 +17,11 @@ import cats.instances.list.catsStdInstancesForList
 import com.guys.coding.hackathon.backend.infrastructure.postgres.DoobieRequestRepository.{Request => DRequest}
 import hero.common.util.time.TimeUtils.TimeProvider
 import com.guys.coding.hackathon.backend.domain.EntityService
+import com.guys.coding.hackathon.backend.infrastructure.redis.RedisConfigRepository
 
 object ResponseProcessor {
 
-  def run[F[_]: Concurrent: EntityService: KafkaResponseSource: KafkaRequestService: TimeProvider: IdProvider: DoobieRequestRepository: CrawlebUrlsRepository: DoobieJobRepository]
+  def run[F[_]: Concurrent: EntityService: KafkaResponseSource: KafkaRequestService: RedisConfigRepository: TimeProvider: IdProvider: DoobieRequestRepository: CrawlebUrlsRepository: DoobieJobRepository]
       : fs2.Stream[F, Unit] =
     KafkaResponseSource[F].source.map { partition =>
       partition.mapAsync(4) { record =>
@@ -36,18 +37,21 @@ object ResponseProcessor {
 
           case Response.Is.Success(CrawlSuccess(requestId, urls, foundEntities, _)) =>
             for {
-              _           <- OptionT.liftF(DoobieRequestRepository[F].setRequestComplete(RequestId(requestId), success = true))
-              request     <- OptionT(DoobieRequestRepository[F].get(RequestId(requestId)))
-              _           <- OptionT.liftF(CrawlebUrlsRepository[F].saveVisted(request.url))
-              job         <- OptionT(DoobieJobRepository[F].getJob(request.jobId))
-              currentTime <- OptionT.liftF(TimeProvider[F].currentTime())
-              filteredUrls <- OptionT.liftF(
-                               urls.toList.traverse(url => CrawlebUrlsRepository[F].isVisited(url).map(url -> _)).map(_.filterNot(_._2).map(_._1))
-                             )
+              _               <- OptionT.liftF(DoobieRequestRepository[F].setRequestComplete(RequestId(requestId), success = true))
+              request         <- OptionT(DoobieRequestRepository[F].get(RequestId(requestId)))
+              _               <- OptionT.liftF(CrawlebUrlsRepository[F].saveVisted(request.url))
+              job             <- OptionT(DoobieJobRepository[F].getJob(request.jobId))
+              selectedDomains <- OptionT(RedisConfigRepository[F].getJobSelectedDomains(job.id))
+              currentTime     <- OptionT.liftF(TimeProvider[F].currentTime())
+              filteredUrls <- OptionT
+                               .liftF(
+                                 urls.toList.traverse(url => CrawlebUrlsRepository[F].isVisited(url).map(url -> _)).map(_.filterNot(_._2).map(_._1))
+                               )
+                               .filter(selectedDomains.contains(_) || selectedDomains.isEmpty)
 
               replacedFoundEntities = foundEntities.map {
                 case e @ EntityMatch("phoneNumber", _, _, _) => e.copy(value = e.value.filter(_.isDigit))
-                case e => e
+                case e                                       => e
               }
               _ <- OptionT.liftF(EntityService[F].saveReturning(job.id, entries = replacedFoundEntities, urls = urls))
 
