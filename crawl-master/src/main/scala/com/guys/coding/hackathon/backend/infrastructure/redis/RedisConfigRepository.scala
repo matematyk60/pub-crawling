@@ -13,9 +13,11 @@ class RedisConfigRepository[F[_]: Functor](cmd: RedisCommands[F, String, String]
   def saveConfig(config: GlobalConfig): F[Unit] = cmd.set(key, config.asJson.spaces4)
   def getConfig(): F[Option[GlobalConfig]] =
     cmd.get(key).map(str => str.flatMap(str => globalConfigDecoder.decodeJson(Json.fromString(str)).toOption))
-  def saveJobSelectedDomains(jobId: JobId, domains: List[String]): F[Unit] = cmd.set(jobId.value, domains.asJson.spaces4)
-  def getJobSelectedDomains(jobId: JobId): F[Option[List[String]]] =
-    cmd.get(jobId.value).map(str => str.flatMap(str => jobSelectedDomainsDecoder.decodeJson(Json.fromString(str)).toOption).map(_.domains))
+  def saveJobSelectedDomains(jobId: JobId, domains: List[String]): F[Unit] = cmd.set(jobId.value, JobSelectedDomains(domains).asJson.spaces4)
+  def getJobSelectedDomains(jobId: JobId): F[List[String]] =
+    cmd
+      .get(jobId.value)
+      .map(str => str.flatMap(str => jobSelectedDomainsDecoder.decodeJson(Json.fromString(str)).toOption).map(_.domains).toList.flatten)
 
   implicit val entityConfigEncoder: Encoder[EntityConfig] = deriveEncoder
   implicit val globalConfigEncoder: Encoder[GlobalConfig] = deriveEncoder

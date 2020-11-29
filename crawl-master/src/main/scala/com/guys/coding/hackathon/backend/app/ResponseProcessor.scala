@@ -52,13 +52,15 @@ object ResponseProcessor {
               request         <- OptionT(DoobieRequestRepository[F].get(RequestId(requestId)))
               _               <- OptionT.liftF(CrawlebUrlsRepository[F].saveVisted(request.url))
               job             <- OptionT(DoobieJobRepository[F].getJob(request.jobId))
-              selectedDomains <- OptionT(RedisConfigRepository[F].getJobSelectedDomains(job.id))
+              selectedDomains <- OptionT.liftF(RedisConfigRepository[F].getJobSelectedDomains(job.id))
               currentTime     <- OptionT.liftF(TimeProvider[F].currentTime())
               filteredUrls <- OptionT
                                .liftF(
-                                 urls.toList.traverse(url => CrawlebUrlsRepository[F].isVisited(url).map(url -> _)).map(_.filterNot(_._2).map(_._1))
+                                 urls.toList
+                                   .traverse(url => CrawlebUrlsRepository[F].isVisited(url).map(url -> _))
+                                   .map(_.filterNot(_._2).map(_._1))
+                                   .map(_.filter(url => selectedDomains.exists(url.contains) || selectedDomains.isEmpty))
                                )
-                               .filter(selectedDomains.contains(_) || selectedDomains.isEmpty)
 
               replacedFoundEntities = foundEntities.map {
                 case e @ EntityMatch("phoneNumber", _, _, _) => e.copy(value = e.value.filter(_.isDigit))

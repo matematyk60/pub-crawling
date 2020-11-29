@@ -84,6 +84,7 @@ class ExampleMutation(
             bitcoinAddressEnabled ::
             ssnNumberEnabled ::
             creditCardEnabled ::
+          selectedDomains ::
             Nil,
           resolve = c => {
             CrawlingService

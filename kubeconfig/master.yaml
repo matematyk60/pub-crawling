@@ -13,7 +13,7 @@ spec:
         app: backend-master
     spec:
       containers:
-        - image: matematyk60/crawl-master:0.40
+        - image: matematyk60/crawl-master:0.45
           name: backend-master
           env:
             - name: POSTGRES_HOST
