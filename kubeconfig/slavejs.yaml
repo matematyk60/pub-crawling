@@ -13,7 +13,7 @@ spec:
         app: backend-slavejs
     spec:
       containers:
-        - image: porcupine96/puppeteer-crawler:0.3
+        - image: porcupine96/puppeteer-crawler:0.5
           name: backend-slavejs
           env:
             - name: REDIS_PORT

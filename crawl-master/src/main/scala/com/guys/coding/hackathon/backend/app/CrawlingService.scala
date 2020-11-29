@@ -21,12 +21,12 @@ object CrawlingService {
 
   def duckDuckGoUrl(phrases: List[String]): String = {
     val search = phrases.map(phrase => s"""$phrase""").mkString(" ")
-    s"http://duckduckgo.com/html?q=$search"
+    s"http://duckduckgo.com/html?q=${java.net.URLEncoder.encode(search)}"
   }
 
   def googleUrl(phrases: List[String]): String = {
     val search = phrases.map(phrase => s"""$phrase""").mkString(" ")
-    s"http://duckduckgo.com/html?q=$search!g"
+    s"http://duckduckgo.com/html?q=${java.net.URLEncoder.encode(search)}!g"
   }
 
   def startFromPhrases[F[_]: EntityService: Monad: IdProvider: TimeProvider: KafkaRequestService: DoobieJobRepository: DoobieRequestRepository: RedisConfigRepository](
@@ -34,7 +34,10 @@ object CrawlingService {
       operator: String,
       jobIterations: Int,
       emailEntityEnabled: Boolean,
-      phoneNumberEntityEnabled: Boolean
+      phoneNumberEntityEnabled: Boolean,
+      bitcoinAddressEnabled: Boolean,
+      ssnNumberEnabled: Boolean,
+      creditCardEnabled: Boolean
   ): F[Unit] = {
     val operator_ = operator.toLowerCase match {
       case "and" => Query.Operator.AND
@@ -63,7 +66,10 @@ object CrawlingService {
                  )
       enabledEntities = List(
         Option.when(emailEntityEnabled)(EntityConfig.emailEntity),
-        Option.when(phoneNumberEntityEnabled)(EntityConfig.phoneNumber)
+        Option.when(phoneNumberEntityEnabled)(EntityConfig.phoneNumber),
+        Option.when(bitcoinAddressEnabled)(EntityConfig.bitcoinAddress),
+        Option.when(ssnNumberEnabled)(EntityConfig.ssnNumber),
+        Option.when(creditCardEnabled)(EntityConfig.creditCard)
       ).flatten
       globalConfig = GlobalConfig(enabledEntities, discardedJobs = List.empty)
       _            <- RedisConfigRepository[F].saveConfig(globalConfig)

@@ -40,11 +40,18 @@ class ExampleMutation(
         val iterationsArg            = Argument("iterations", IntType)
         val emailEntityEnabled       = Argument("emailEntityEnabled", BooleanType)
         val phoneNumberEntityEnabled = Argument("phoneNumberEntityEnabled", BooleanType)
+        val bitcoinAddressEnabled    = Argument("bitcoinAddressEnabled", BooleanType)
+        val ssnNumberEnabled         = Argument("ssnNumberEnabled", BooleanType)
+        val creditCardEnabled        = Argument("creditCardEnabled", BooleanType)
 
         Field(
           "startCrawling",
           StringType,
-          arguments = phrasesArg :: operatorArg :: iterationsArg :: emailEntityEnabled :: phoneNumberEntityEnabled :: Nil,
+          arguments = phrasesArg :: operatorArg :: iterationsArg :: emailEntityEnabled :: phoneNumberEntityEnabled ::
+            bitcoinAddressEnabled ::
+            ssnNumberEnabled ::
+            creditCardEnabled ::
+            Nil,
           resolve = c => {
             CrawlingService
               .startFromPhrases[IO](
@@ -52,7 +59,10 @@ class ExampleMutation(
                 operator = c.arg(operatorArg),
                 jobIterations = c.arg(iterationsArg),
                 emailEntityEnabled = c.arg(emailEntityEnabled),
-                phoneNumberEntityEnabled = c.arg(phoneNumberEntityEnabled)
+                phoneNumberEntityEnabled = c.arg(phoneNumberEntityEnabled),
+                bitcoinAddressEnabled = c.arg(bitcoinAddressEnabled),
+                ssnNumberEnabled = c.arg(ssnNumberEnabled),
+                creditCardEnabled = c.arg(creditCardEnabled)
               )
               .map(show => "...")
               .unsafeToFuture()
