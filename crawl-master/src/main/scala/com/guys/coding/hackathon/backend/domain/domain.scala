@@ -17,6 +17,21 @@ object EntityConfig {
     "phoneNumber",
     """^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,6}$"""
   )
+
+  val bitcoinAddress: EntityConfig = EntityConfig(
+    "bitcoinAddress",
+    """^(bc1|[13])[a-zA-HJ-NP-Z0-9]{25,39}$"""
+  )
+
+  val ssnNumber: EntityConfig = EntityConfig(
+    "ssnNumber",
+    """^(?!0{3})(?!6{3})[0-8]\d{2}-(?!0{2})\d{2}-(?!0{4})\d{4}$"""
+  )
+
+  val creditCard: EntityConfig = EntityConfig(
+    "creditCard",
+    """(^4[0-9]{12}(?:[0-9]{3})?$)|(^(?:5[1-5][0-9]{2}|222[1-9]|22[3-9][0-9]|2[3-6][0-9]{2}|27[01][0-9]|2720)[0-9]{12}$)|(3[47][0-9]{13})|(^3(?:0[0-5]|[68][0-9])[0-9]{11}$)|(^6(?:011|5[0-9]{2})[0-9]{12}$)|(^(?:2131|1800|35\d{3})\d{11}$)"""
+  )
 }
 
 case class GlobalConfig(
