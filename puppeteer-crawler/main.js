@@ -2,11 +2,12 @@ const puppeteer = require("puppeteer");
 const kafka = require("kafka-node");
 const protobuf = require("protobufjs");
 const redis = require("redis");
+const pro = require("./compiled/protocol_pb");
 
 const redisHost = process.env.REDIS_HOST || "redis://127.0.0.1";
 const kafkaHost = process.env.KAFKA_HOST || "kafka";
 const requestTopic = process.env.REQUEST_TOPIC || "crawler-requests";
-const responseTopic = process.env.RESPONSE_TOPIC || "crawler-responses";
+const responseTopic = process.env.RESPONSE_TOPIC || "crawler-responses-4";
 
 let protoPath = "protocol.proto";
 
@@ -15,6 +16,7 @@ protobuf.load(protoPath, function (err, root) {
 
   let Request = root.lookupType("Request");
   let Response = root.lookupType("Response");
+  let EntityMatch = root.lookupType("EntityMatch");
 
   const kafkaClient = new kafka.KafkaClient({ kafkaHost: kafkaHost + ":9092" });
   const redisClient = redis.createClient((host = redisHost));
@@ -73,36 +75,37 @@ protobuf.load(protoPath, function (err, root) {
 
           const entityMatches = config["namedEntities"].map((entity) => {
             const regex = new RegExp(entity.regex, "g");
-            const matches = [...content.matchAll(regex)];
 
-            return matches.map((m) => ({
-              entityId: entity.entityId,
-              value: m[0],
-              count: 1,
-            }));
+            const matches = [["hello"]];
+
+            return matches.map((m) => {
+              const em = new pro.EntityMatch();
+              em.setEntityid(entity.entityId);
+              em.setValue(m[0]);
+              em.setCount(1);
+
+              return em;
+            });
           });
 
           const matches = [].concat.apply([], entityMatches);
 
-          let payload = {
-            success: {
-              requestId: request.crawl.requestId,
-              urls: links,
-              foundEntities: matches,
-            },
-          };
+          const response = new pro.Response();
+          const success = new pro.CrawlSuccess();
 
-          let response = Response.fromObject(payload);
+          success.setRequestid(request.crawl.requestId);
+          success.setUrlsList(links);
+          success.setFoundentitiesList(matches);
 
-          console.log(response);
+          response.setSuccess(success);
 
-          let responseBytes = Response.encode(response).finish();
+          const responseBytes = response.serializeBinary();
 
           producer.send(
             [
               {
                 topic: responseTopic,
-                messages: responseBytes,
+                messages: [responseBytes],
               },
             ],
             function (err, data) {

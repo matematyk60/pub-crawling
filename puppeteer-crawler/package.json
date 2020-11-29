@@ -1,11 +1,12 @@
 {
   "dependencies": {
+    "google-protobuf": "^3.14.0",
     "kafka-node": "^5.0.0",
     "protobufjs": "^6.10.2",
     "puppeteer": "^5.5.0",
     "redis": "^3.0.2"
   },
-    "scripts": {
-	"start": "node main.js"
-    }
+  "scripts": {
+    "start": "node main.js"
+  }
 }
