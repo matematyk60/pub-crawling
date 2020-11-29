@@ -97,7 +97,7 @@ class Neo4jNodeRepository(session: Session[IO]) {
             e.entityId          as foundEntityId,
             e.entityValue       as foundEntityValue,
             e.jobId             as foundEntityJobId,
-            r.counter           as counter
+            r.counter           as counter ORDER BY counter desc
             skip $skip limit $limit""")
       .query[TableRow]
       .list(session)
