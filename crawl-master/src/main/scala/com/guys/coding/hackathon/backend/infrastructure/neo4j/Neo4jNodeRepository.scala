@@ -91,7 +91,7 @@ class Neo4jNodeRepository(session: Session[IO]) {
 
 }
 object Neo4jNodeRepository {
-  case class TableRow(startJobId: String, startEntityValue: String, foundEntityId: String, fountEntityValue: String, counter: Int)
+  case class TableRow(startJobId: String, startEntityValue: String, foundEntityId: String, foundEntityValue: String, counter: Int)
 
   case class EntityNode(
       entityId: String,    //  albo found albo Query
