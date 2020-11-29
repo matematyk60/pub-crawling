@@ -110,14 +110,18 @@ class Neo4jTest extends AnyFlatSpec with Matchers {
 
       val targetFilters =
         List(
-          depth.map(d => c"depth: $d"),
           entityId.map(d => c"entityId: ${d.value}")
+        ).flatten.reduceOption(_ + c", " + _).map(c"{" + _ + c"}").getOrElse(c"")
+
+      val srcTest =
+        List(
+          depth.map(d => c"jobDepth: $d")
         ).flatten.reduceOption(_ + c", " + _).map(c"{" + _ + c"}").getOrElse(c"")
 
       val sourceFilters =
         jobIds.filter(_.nonEmpty).map(ids => c"where j.jobId IN ${ids.map(_.value)}").getOrElse(c"")
 
-      (c"match (j:Entity) -[r:coexists]->(e:Entity" + targetFilters + c")" + sourceFilters + c""" return
+      (c"match (j:Entity" + srcTest + c") -[r:coexists]->(e:Entity" + targetFilters + c")" + sourceFilters + c""" return
             j.jobId             as startJobId,
             j.entityValue       as startEntityValue,
             e.entityId          as foundEntityId,
@@ -128,7 +132,7 @@ class Neo4jTest extends AnyFlatSpec with Matchers {
         .query
     }
 
-    println(getTable(Some(List("ala", "ola").map(JobId)), None, None, 0, 10))
+    println(getTable(Some(List("ala", "ola").map(JobId)), None, Some(0), 0, 10))
 
   }
 
