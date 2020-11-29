@@ -12,8 +12,9 @@ import simulacrum.typeclass
 @typeclass
 trait EntityService[F[_]] {
 
-  def saveReturning(jobId: JobId, entries: Seq[EntityMatch], urls: Seq[String]): F[Unit]
+  def saveReturning(jobId: JobId, entries: Seq[EntityMatch]): F[Unit]
   def insertQueryNode(id: JobId, jobDepth: Int, entityValue: EntityValue): F[Unit]
+  def makeEntityAJob(id: JobId, jobDepth: Int, entityValue: EntityValue): F[Unit]
   def neo4j: Neo4jNodeRepository
 }
 
@@ -23,14 +24,16 @@ object EntityService {
 
     override def neo4j: Neo4jNodeRepository = neo4J
 
-    def saveReturning(jobId: JobId, entries: Seq[EntityMatch], urls: Seq[String]) = {
+    def saveReturning(jobId: JobId, entries: Seq[EntityMatch]) = {
       val optTo = entries.toList.map(m => (EntityId(m.entityId), EntityValue(m.value))) |> (NonEmptyList.fromList _)
-      optTo.traverse(to => neo4J.saveEdge(from = jobId, to = to, urls = urls.toList)).void
+      optTo.traverse(to => neo4J.saveEdge(from = jobId, to = to)).void
     }
 
     def insertQueryNode(id: JobId, jobDepth: Int, entityValue: EntityValue): IO[Unit] =
       neo4J.insertNode(id, jobDepth = jobDepth, EntityId("query"), entityValue = entityValue)
 
+    def makeEntityAJob(id: JobId, jobDepth: Int, entityValue: EntityValue): IO[Unit] =
+      neo4J.makeEntityAJob(id, jobDepth = jobDepth, entityValue = entityValue)
   }
 
 }

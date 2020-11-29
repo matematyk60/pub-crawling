@@ -140,7 +140,7 @@ object CrawlingService {
                        jobIterations
                      )
 
-                     _ <- EntityService[F].insertQueryNode(
+                     _ <- EntityService[F].makeEntityAJob(
                            job.id,
                            job.jobDepth,
                            EntityValue(enitiyValue)

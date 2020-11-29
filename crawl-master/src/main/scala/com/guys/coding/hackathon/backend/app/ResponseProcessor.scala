@@ -1,20 +1,30 @@
 package com.guys.coding.hackathon.backend.app
 
-import cats.{Applicative, Monad}
+import cats.Applicative
 import cats.data.OptionT
 import cats.effect.Concurrent
-import com.guys.coding.hackathon.backend.domain.{JobId, RequestId}
-import com.guys.coding.hackathon.backend.infrastructure.kafka.{KafkaRequestService, KafkaResponseSource}
-import com.guys.coding.hackathon.backend.infrastructure.postgres.{DoobieJobRepository, DoobieRequestRepository}
-import com.guys.coding.hackathon.proto.notifcation.{Crawl, CrawlFailure, CrawlSuccess, EntityMatch, Query, Request, Response}
-import cats.syntax.functor.toFunctorOps
-import cats.syntax.flatMap.toFlatMapOps
-import cats.syntax.apply.catsSyntaxApply
-import com.guys.coding.hackathon.backend.infrastructure.inmem.CrawlebUrlsRepository
-import hero.common.util.IdProvider
-import cats.syntax.traverse.toTraverseOps
 import cats.instances.list.catsStdInstancesForList
+import cats.syntax.flatMap.toFlatMapOps
+import cats.syntax.functor.toFunctorOps
+import cats.syntax.traverse.toTraverseOps
+import com.guys.coding.hackathon.backend.domain.EntityService
+import com.guys.coding.hackathon.backend.domain.JobId
+import com.guys.coding.hackathon.backend.domain.RequestId
+import com.guys.coding.hackathon.backend.domain.UrlFilter
+import com.guys.coding.hackathon.backend.infrastructure.inmem.CrawlebUrlsRepository
+import com.guys.coding.hackathon.backend.infrastructure.kafka.KafkaRequestService
+import com.guys.coding.hackathon.backend.infrastructure.kafka.KafkaResponseSource
+import com.guys.coding.hackathon.backend.infrastructure.postgres.DoobieJobRepository
+import com.guys.coding.hackathon.backend.infrastructure.postgres.DoobieRequestRepository
 import com.guys.coding.hackathon.backend.infrastructure.postgres.DoobieRequestRepository.{Request => DRequest}
+import com.guys.coding.hackathon.proto.notifcation.Crawl
+import com.guys.coding.hackathon.proto.notifcation.CrawlFailure
+import com.guys.coding.hackathon.proto.notifcation.CrawlSuccess
+import com.guys.coding.hackathon.proto.notifcation.EntityMatch
+import com.guys.coding.hackathon.proto.notifcation.Query
+import com.guys.coding.hackathon.proto.notifcation.Request
+import com.guys.coding.hackathon.proto.notifcation.Response
+import hero.common.util.IdProvider
 import hero.common.util.time.TimeUtils.TimeProvider
 import com.guys.coding.hackathon.backend.domain.EntityService
 import com.guys.coding.hackathon.backend.infrastructure.redis.RedisConfigRepository
@@ -35,7 +45,8 @@ object ResponseProcessor {
               _       <- OptionT.liftF(CrawlebUrlsRepository[F].saveVisted(request.url))
             } yield ()
 
-          case Response.Is.Success(CrawlSuccess(requestId, urls, foundEntities, _)) =>
+          case Response.Is.Success(CrawlSuccess(requestId, rawUrls, foundEntities, _)) =>
+            val urls = rawUrls.filter(UrlFilter.allowedToCrawl)
             for {
               _               <- OptionT.liftF(DoobieRequestRepository[F].setRequestComplete(RequestId(requestId), success = true))
               request         <- OptionT(DoobieRequestRepository[F].get(RequestId(requestId)))
@@ -53,7 +64,7 @@ object ResponseProcessor {
                 case e @ EntityMatch("phoneNumber", _, _, _) => e.copy(value = e.value.filter(_.isDigit))
                 case e                                       => e
               }
-              _ <- OptionT.liftF(EntityService[F].saveReturning(job.id, entries = replacedFoundEntities, urls = urls))
+              _ <- OptionT.liftF(EntityService[F].saveReturning(job.id, entries = replacedFoundEntities))
 
               _ <- OptionT.liftF(
                     if (request.depth == job.iterations) Applicative[F].unit
