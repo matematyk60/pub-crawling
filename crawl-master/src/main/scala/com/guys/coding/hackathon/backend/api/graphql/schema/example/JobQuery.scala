@@ -43,6 +43,7 @@ class JobQuery(neo4jRepo: Neo4jNodeRepository, tx: Transactor[IO]) extends Query
         }
       ), {
 
+        val JobIdFilter = Argument("anyJobId", OptionInputType(ListInputType(StringType)))
         val EntityIdArg = Argument("entityId", OptionInputType(StringType))
         val DepthArg    = Argument("jobDepth", OptionInputType(IntType))
         val LimitArg    = Argument("limit", IntType)
@@ -51,12 +52,13 @@ class JobQuery(neo4jRepo: Neo4jNodeRepository, tx: Transactor[IO]) extends Query
         Field(
           "entityTable",
           ListType(TableRowType),
-          arguments = List(EntityIdArg, DepthArg, OffsetArg, LimitArg), // TODO:bcm  add parentJobId filter. Should be a list ideally
-          resolve = ctx =>                                              // ctx.ctx.authorizedF { _ =>
+          arguments = List(JobIdFilter, EntityIdArg, DepthArg, OffsetArg, LimitArg), // TODO:bcm  add parentJobId filter. Should be a list ideally
+          resolve = ctx =>                                                           // ctx.ctx.authorizedF { _ =>
           {
 
             neo4jRepo
               .getTable(
+                ctx.arg(JobIdFilter).map(_.map(JobId).toList),
                 ctx.arg(EntityIdArg).map(EntityId),
                 ctx.arg(DepthArg),
                 skip = ctx.arg(OffsetArg),

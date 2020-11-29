@@ -57,15 +57,25 @@ class Neo4jNodeRepository(session: Session[IO]) {
 
   }
 
-  def getTable(entityId: Option[EntityId], depth: Option[Int], skip: Int, limit: Int): IO[List[Neo4jNodeRepository.TableRow]] = {
+  def getTable(
+      jobIds: Option[List[JobId]],
+      entityId: Option[EntityId],
+      depth: Option[Int],
+      skip: Int,
+      limit: Int
+  ): IO[List[Neo4jNodeRepository.TableRow]] = {
 
-    val filters =
+    val targetFilters =
       List(
         depth.map(d => c"depth: $d"),
         entityId.map(d => c"entityId: ${d.value}")
       ).flatten.reduceOption(_ + c", " + _).map(c"{" + _ + c"}").getOrElse(c"")
 
-    (c"match (j:Entity) -[r:coexists]->(e:Entity" + filters + c""") return
+    val sourceFilters = List(
+      jobIds.filter(_.nonEmpty).map(ids => c"jobId IN ${ids.map(_.value)}")
+    ).flatten.reduceOption(_ + c", " + _).map(c"{" + _ + c"}").getOrElse(c"")
+
+    (c"match (j:Entity" + sourceFilters + c") -[r:coexists]->(e:Entity" + targetFilters + c""") return
             j.jobId             as startJobId,
             j.entityValue       as startEntityValue,
             e.entityId          as foundEntityId,

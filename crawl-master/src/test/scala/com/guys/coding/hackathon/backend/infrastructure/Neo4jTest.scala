@@ -100,18 +100,35 @@ class Neo4jTest extends AnyFlatSpec with Matchers {
     import neotypes.implicits.syntax.cypher.neotypesSyntaxCypherStringInterpolator
     import neotypes.implicits.mappers.all._
 
-    def getTable(entityId: Option[EntityId], depth: Option[Int], skip: Int, limit: Int) = {
-      val filters =
+    def getTable(
+        jobIds: Option[List[JobId]],
+        entityId: Option[EntityId],
+        depth: Option[Int],
+        skip: Int,
+        limit: Int
+    ) = {
+
+      val targetFilters =
         List(
           depth.map(d => c"depth: $d"),
           entityId.map(d => c"entityId: ${d.value}")
         ).flatten.reduceOption(_ + c", " + _).map(c"{" + _ + c"}").getOrElse(c"")
 
-      (c"match (j:Entity) -[r:coexists]->(e:Entity" + filters + c") return j.jobId as startJobId,j.entityValue as startValue,e.entityId,e.entityValue,r.counter skip $skip limit $limit")
+      val sourceFilters =
+        jobIds.filter(_.nonEmpty).map(ids => c"where j.jobId IN ${ids.map(_.value)}").getOrElse(c"")
+
+      (c"match (j:Entity) -[r:coexists]->(e:Entity" + targetFilters + c")" + sourceFilters + c""" return
+            j.jobId             as startJobId,
+            j.entityValue       as startEntityValue,
+            e.entityId          as foundEntityId,
+            e.entityValue       as foundEntityValue,
+            r.counter           as counter
+            skip $skip limit $limit""")
         .query[TableRow]
+        .query
     }
 
-    println(getTable(None, None, 0, 10).query)
+    println(getTable(Some(List("ala", "ola").map(JobId)), None, None, 0, 10))
 
   }
 

@@ -64,7 +64,7 @@ class ExampleMutation(
                 ssnNumberEnabled = c.arg(ssnNumberEnabled),
                 creditCardEnabled = c.arg(creditCardEnabled)
               )
-              .map(show => "...")
+              .map(_.value)
               .unsafeToFuture()
           }
         )
@@ -80,7 +80,7 @@ class ExampleMutation(
 
         Field(
           "crawlChoosenEntities",
-          StringType,
+          ListType(StringType),
           arguments = ParentJobId :: EntityValuesArg :: iterationsArg :: emailEntityEnabled :: phoneNumberEntityEnabled ::
             bitcoinAddressEnabled ::
             ssnNumberEnabled ::
@@ -98,7 +98,7 @@ class ExampleMutation(
                 ssnNumberEnabled = c.arg(ssnNumberEnabled),
                 creditCardEnabled = c.arg(creditCardEnabled)
               )
-              .map(_ => "...")
+              .map(r => r.map(_.value))
               .unsafeToFuture()
           }
         )
