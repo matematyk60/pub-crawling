@@ -89,9 +89,9 @@ class Neo4jNodeRepository(session: Session[IO]) {
       ).flatten.reduceOption(_ + c", " + _).map(c"{" + _ + c"}").getOrElse(c"")
 
     val sourceFilters =
-      jobIds.filter(_.nonEmpty).map(ids => c"where j.jobId IN ${ids.map(_.value)}").getOrElse(c"")
+      jobIds.filter(_.nonEmpty).map(ids => c"and j.jobId IN ${ids.map(_.value)}").getOrElse(c"")
 
-    (c"match (j:Entity" + srcTest + c") -[r:coexists]->(e:Entity" + targetFilters + c")" + sourceFilters + c""" return
+    (c"match (j:Entity" + srcTest + c") -[r:coexists]->(e:Entity" + targetFilters + c") where j.entityValue <> e.entityValue " + sourceFilters + c""" return
             j.jobId             as startJobId,
             j.entityValue       as startEntityValue,
             e.entityId          as foundEntityId,

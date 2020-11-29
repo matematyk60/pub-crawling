@@ -72,6 +72,11 @@ class JobQuery(neo4jRepo: Neo4jNodeRepository, tx: Transactor[IO]) extends Query
                         skip = ctx.arg(OffsetArg),
                         limit = ctx.arg(LimitArg)
                       )
+                      .map(
+                        _.filter(r =>
+                          r.startEntityValue != null && r.startEntityValue != "null" && r.foundEntityValue != null && r.foundEntityValue != "null" // :/
+                        )
+                      )
             } yield TableResult(count, tab.toList)
 
           }.unsafeToFuture()
