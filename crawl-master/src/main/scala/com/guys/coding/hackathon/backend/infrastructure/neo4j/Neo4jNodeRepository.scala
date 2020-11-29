@@ -67,7 +67,7 @@ class Neo4jNodeRepository(session: Session[IO]) {
 
     val targetFilters =
       List(
-        depth.map(d => c"depth: $d"),
+        depth.map(d => c"jobDepth: $d"),
         entityId.map(d => c"entityId: ${d.value}")
       ).flatten.reduceOption(_ + c", " + _).map(c"{" + _ + c"}").getOrElse(c"")
 
