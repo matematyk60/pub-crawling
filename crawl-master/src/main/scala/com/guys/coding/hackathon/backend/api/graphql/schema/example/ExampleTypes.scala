@@ -61,4 +61,7 @@ object ExampleTypes {
 
   implicit val TableRowType = deriveObjectType[GraphqlSecureContext, TableRow]()
 
+  case class TableResult(count: Int, rows: List[TableRow])
+  implicit val TableResultType = deriveObjectType[GraphqlSecureContext, TableResult]()
+
 }

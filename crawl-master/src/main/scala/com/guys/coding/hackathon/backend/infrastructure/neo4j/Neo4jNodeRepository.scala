@@ -83,10 +83,36 @@ class Neo4jNodeRepository(session: Session[IO]) {
             j.entityValue       as startEntityValue,
             e.entityId          as foundEntityId,
             e.entityValue       as foundEntityValue,
+            e.jobId             as foundEntityJobId,
             r.counter           as counter
             skip $skip limit $limit""")
       .query[TableRow]
       .list(session)
+  }
+
+  def getTableCount(
+      jobIds: Option[List[JobId]],
+      entityId: Option[EntityId],
+      depth: Option[Int]
+  ): IO[Int] = {
+
+    val targetFilters =
+      List(
+        entityId.map(d => c"entityId: ${d.value}")
+      ).flatten.reduceOption(_ + c", " + _).map(c"{" + _ + c"}").getOrElse(c"")
+
+    val srcTest =
+      List(
+        depth.map(d => c"jobDepth: $d")
+      ).flatten.reduceOption(_ + c", " + _).map(c"{" + _ + c"}").getOrElse(c"")
+
+    val sourceFilters =
+      jobIds.filter(_.nonEmpty).map(ids => c"where j.jobId IN ${ids.map(_.value)}").getOrElse(c"")
+
+    (c"match (j:Entity" + srcTest + c") -[r:coexists]->(e:Entity" + targetFilters + c")" + sourceFilters + c""" return count(*)""")
+      .query[Int]
+      .single(session)
+
   }
 
 // match (j:Entity) -[r:coexists]->(e:Entity{entityId:"email"}) return j.jobId as startJobId,j.entityValue as startValue,e.entityId,e.entityValue as foundEntityValue,r.counter
@@ -103,7 +129,14 @@ class Neo4jNodeRepository(session: Session[IO]) {
 
 }
 object Neo4jNodeRepository {
-  case class TableRow(startJobId: String, startEntityValue: String, foundEntityId: String, foundEntityValue: String, counter: Int)
+  case class TableRow(
+      startJobId: String,
+      startEntityValue: String,
+      foundEntityId: String,
+      foundEntityValue: String,
+      foundEntityJobId: Option[String],
+      counter: Int
+  )
 
   case class EntityNode(
       entityId: String,    //  albo found albo Query

@@ -2,17 +2,18 @@ package com.guys.coding.hackathon.backend.api.graphql.schema.example
 
 import cats.effect.IO
 import com.guys.coding.hackathon.backend.api.graphql.schema.QueryHolder
+import com.guys.coding.hackathon.backend.api.graphql.schema.example.ExampleTypes.TableResult
 import com.guys.coding.hackathon.backend.api.graphql.service.GraphqlSecureContext
+import com.guys.coding.hackathon.backend.domain.EntityId
 import com.guys.coding.hackathon.backend.domain.JobId
+import com.guys.coding.hackathon.backend.infrastructure.neo4j.Neo4jNodeRepository
 import com.guys.coding.hackathon.backend.infrastructure.postgres.DoobieJobRepository
 import doobie.util.transactor.Transactor
 import sangria.schema._
-import com.guys.coding.hackathon.backend.infrastructure.neo4j.Neo4jNodeRepository
-import com.guys.coding.hackathon.backend.domain.EntityId
 
 class JobQuery(neo4jRepo: Neo4jNodeRepository, tx: Transactor[IO]) extends QueryHolder {
 
-  import ExampleTypes.{JobType, TableRowType}
+  import ExampleTypes.{JobType, TableResultType}
   val JobIdArg = Argument("jobId", StringType)
 
   override def queryFields(): List[Field[GraphqlSecureContext, Unit]] =
@@ -51,21 +52,29 @@ class JobQuery(neo4jRepo: Neo4jNodeRepository, tx: Transactor[IO]) extends Query
 
         Field(
           "entityTable",
-          ListType(TableRowType),
-          arguments = List(JobIdFilter, EntityIdArg, DepthArg, OffsetArg, LimitArg), // TODO:bcm  add parentJobId filter. Should be a list ideally
-          resolve = ctx =>                                                           // ctx.ctx.authorizedF { _ =>
+          TableResultType,
+          arguments = List(JobIdFilter, EntityIdArg, DepthArg, OffsetArg, LimitArg),
+          resolve = ctx => // ctx.ctx.authorizedF { _ =>
           {
 
-            neo4jRepo
-              .getTable(
-                ctx.arg(JobIdFilter).map(_.map(JobId).toList),
-                ctx.arg(EntityIdArg).map(EntityId),
-                ctx.arg(DepthArg),
-                skip = ctx.arg(OffsetArg),
-                limit = ctx.arg(LimitArg)
-              )
-              .unsafeToFuture()
-          }
+            for {
+              count <- neo4jRepo
+                        .getTableCount(
+                          ctx.arg(JobIdFilter).map(_.map(JobId).toList),
+                          ctx.arg(EntityIdArg).map(EntityId),
+                          ctx.arg(DepthArg)
+                        )
+              tab <- neo4jRepo
+                      .getTable(
+                        ctx.arg(JobIdFilter).map(_.map(JobId).toList),
+                        ctx.arg(EntityIdArg).map(EntityId),
+                        ctx.arg(DepthArg),
+                        skip = ctx.arg(OffsetArg),
+                        limit = ctx.arg(LimitArg)
+                      )
+            } yield TableResult(count, tab.toList)
+
+          }.unsafeToFuture()
         )
       }
     )
