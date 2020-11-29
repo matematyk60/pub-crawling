@@ -59,9 +59,15 @@ object CrawlingService {
             job.jobDepth,
             EntityValue(operator + " (" + phrases.reduceOption(_ + " " + _).getOrElse("") + ")")
           )
-      _    <- DoobieJobRepository[F].createJob(job)
-      _ <- RedisConfigRepository[F].saveJobSelectedDomains(JobId(jobId), selectedDomains)
-      urls = List(googleUrls(phrases, selectedDomains), duckDuckGoUrls(phrases, selectedDomains)).flatten
+      _         <- DoobieJobRepository[F].createJob(job)
+      _         <- RedisConfigRepository[F].saveJobSelectedDomains(JobId(jobId), selectedDomains)
+      basicUrls = List(googleUrls(phrases, selectedDomains), duckDuckGoUrls(phrases, selectedDomains)).flatten
+      hardcodedUrls = List(
+        googleUrls(phrases, List("allegro.pl", "ebay.com", "olx.pl")),
+        duckDuckGoUrls(phrases, List("allegro.pl", "ebay.com", "olx.pl"))
+      ).flatten
+      urls = if (selectedDomains.isEmpty) basicUrls ++ hardcodedUrls
+      else basicUrls
       requests <- urls.traverse(url =>
                    for {
                      requestId <- IdProvider[F].newId()
