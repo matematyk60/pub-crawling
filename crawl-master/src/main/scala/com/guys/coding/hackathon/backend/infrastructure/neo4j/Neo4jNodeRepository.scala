@@ -43,7 +43,7 @@ class Neo4jNodeRepository(session: Session[IO]) {
   """.query[Unit].single(session)
 
   def saveEdge(from: JobId, to: NonEmptyList[(EntityId, EntityValue)], urls: List[String]): IO[Unit] = {
-    println(s"Saving edges from $from, to $to, urls size: $urls")
+    println(s"Saving edges from $from, to $to, urls size: ${urls.size}")
     to.traverse {
       case (id, value) => // TODO:bcm  batch it
         c"""

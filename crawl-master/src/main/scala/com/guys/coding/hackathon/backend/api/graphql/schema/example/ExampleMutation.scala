@@ -34,17 +34,7 @@ class ExampleMutation(
 
   override def mutationFields(): List[Field[GraphqlSecureContext, Unit]] =
     fields[GraphqlSecureContext, Unit](
-      Field(
-        "addExample",
-        MutationResultType(StringType, StringType, "CreateExampleResult"),
-        arguments = ExampleArg :: Nil,
-        resolve = _ => {
-          exampleService.getBestShowEver
-            .map(show => MutationResult[String, String](None, Some(show)))
-            .unsafeToFuture()
-
-        }
-      ), {
+      {
         val phrasesArg               = Argument("phrases", ListInputType(StringType))
         val operatorArg              = Argument("operator", StringType)
         val iterationsArg            = Argument("iterations", IntType)
