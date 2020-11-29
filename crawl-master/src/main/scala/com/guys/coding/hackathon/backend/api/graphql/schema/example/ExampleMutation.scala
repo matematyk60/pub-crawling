@@ -47,7 +47,7 @@ class ExampleMutation(
             bitcoinAddressEnabled ::
             ssnNumberEnabled ::
             creditCardEnabled ::
-          selectedDomains ::
+            selectedDomains ::
             Nil,
           resolve = c => {
             CrawlingService
@@ -113,6 +113,13 @@ class ExampleMutation(
             CrawlingService.cancelJob[IO](JobId(c.arg(jobId))).map(_ => c.arg(jobId)).unsafeToFuture()
           }
         )
-      }
+      },
+      Field(
+        "truncateNeo4j",
+        StringType,
+        resolve = c => {
+          c.ctx.services.enttityService.neo4j.truncate().map(_ => "...").unsafeToFuture()
+        }
+      )
     )
 }

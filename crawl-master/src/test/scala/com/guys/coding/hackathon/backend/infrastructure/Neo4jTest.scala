@@ -48,7 +48,7 @@ class Neo4jTest extends AnyFlatSpec with Matchers {
           val startId = JobId("start")
           for {
             _ <- repo.insertNode(startId, 0, EntityId("query"), EntityValue("dzialaj start"))
-            _ <- repo.saveEdge(startId, entries, urls = urls)
+            _ <- repo.saveEdge(startId, entries)
             _ <- IO(println("FINISH"))
           } yield ()
         }
@@ -66,7 +66,7 @@ class Neo4jTest extends AnyFlatSpec with Matchers {
           val startId = JobId("oldsdmsdsfdsxxxxxxxxxd")
           for {
             _ <- repo.insertNode(startId, 0, EntityId("query"), EntityValue("dzialaj prosze"))
-            _ <- repo.saveEdge(startId, entries, urls = urls)
+            _ <- repo.saveEdge(startId, entries)
             _ <- IO(println("FINISH"))
           } yield ()
         }
@@ -80,7 +80,7 @@ class Neo4jTest extends AnyFlatSpec with Matchers {
           val startId = JobId("ola@a.pl")
           for {
             _ <- repo.insertNode(startId, 1, EntityId("email"), EntityValue("ola@a.pl"))
-            _ <- repo.saveEdge(startId, entries, urls = urls)
+            _ <- repo.saveEdge(startId, entries)
             _ <- IO(println("FINISH"))
           } yield ()
         }

@@ -34,6 +34,20 @@ class Neo4jNodeRepository(session: Session[IO]) {
    * - ?? count
    * */
 
+  def truncate(): IO[Unit] =
+    // c"create(e:Entity{jobId:${id.value},jobDepth: ${jobDepth}, entityId: ${entityId.value}, entityValue: ${entityValue.value}});".query[Unit].single(session)
+    for {
+      _ <- c"match (a)-[r]-(b) delete a,r,b".query[Unit].single(session)
+      _ <- c"match (a) delete a".query[Unit].single(session)
+    } yield ()
+
+  def makeEntityAJob(id: JobId, jobDepth: Int, entityValue: EntityValue): IO[Unit] =
+    // c"create(e:Entity{jobId:${id.value},jobDepth: ${jobDepth}, entityId: ${entityId.value}, entityValue: ${entityValue.value}});".query[Unit].single(session)
+    c"""MERGE(e:Entity{entityValue:${entityValue.value}})
+     ON CREATE SET  e = {jobId:${id.value}, entityId: "unknown", entityValue: ${entityValue.value}, jobDepth: ${jobDepth}}
+     ON MATCH SET e = {jobId:${id.value}, jobDepth: ${jobDepth}};
+  """.query[Unit].single(session)
+
   def insertNode(id: JobId, jobDepth: Int, entityId: EntityId, entityValue: EntityValue): IO[Unit] =
     // c"create(e:Entity{jobId:${id.value},jobDepth: ${jobDepth}, entityId: ${entityId.value}, entityValue: ${entityValue.value}});".query[Unit].single(session)
     c"""MERGE(e:Entity{entityValue:${entityValue.value}})
@@ -41,16 +55,16 @@ class Neo4jNodeRepository(session: Session[IO]) {
      ON MATCH SET e = {jobId:${id.value},entityId: ${entityId.value}, entityValue: ${entityValue.value}, jobDepth: ${jobDepth}};
   """.query[Unit].single(session)
 
-  def saveEdge(from: JobId, to: NonEmptyList[(EntityId, EntityValue)], urls: List[String]): IO[Unit] = {
-    println(s"Saving edges from $from, to $to, urls size: ${urls.size}")
+  def saveEdge(from: JobId, to: NonEmptyList[(EntityId, EntityValue)]): IO[Unit] = {
+    println(s"Saving edges from $from, to $to")
     to.traverse {
-      case (id, value) => // TODO:bcm  batch it
+      case (id, value) =>
         c"""
       match(e:Entity{jobId:${from.value}})
           merge (e)-[r:coexists]-> (to:Entity {entityId: ${id.value}, entityValue:${value.value}, name : ${value.value}})
-          ON CREATE SET r.counter = ${urls.size}
+          ON CREATE SET r.counter = 1
           ON MATCH SET
-          r.counter = coalesce(r.counter, 0) + ${urls.size};
+          r.counter = coalesce(r.counter, 0) + 1;
     """.query[Unit].single(session)
     }.void
 
