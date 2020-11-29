@@ -66,7 +66,13 @@ class Neo4jNodeRepository(session: Session[IO]) {
         entityId.map(d => c"entityId: ${d.value}")
       ).flatten.reduceOption(_ + c", " + _).map(c"{" + _ + c"}").getOrElse(c"")
 
-    (c"match (j:Entity) -[r:coexists]->(e:Entity" + filters + c") return j.jobId as startJobId,j.entityValue as startValue,e.entityId,e.entityValue,r.counter skip $skip limit $limit")
+    (c"match (j:Entity) -[r:coexists]->(e:Entity" + filters + c""") return
+            j.jobId             as startJobId,
+            j.entityValue       as startEntityValue,
+            e.entityId          as foundEntityId,
+            e.entityValue       as foundEntityValue,
+            r.counter           as counter
+            skip $skip limit $limit""")
       .query[TableRow]
       .list(session)
   }

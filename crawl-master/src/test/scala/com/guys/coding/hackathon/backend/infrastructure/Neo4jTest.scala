@@ -14,6 +14,7 @@ import neotypes.cats.effect.implicits._
 import org.neo4j.driver.AuthTokens
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
+import com.guys.coding.hackathon.backend.infrastructure.neo4j.Neo4jNodeRepository.TableRow
 
 class Neo4jTest extends AnyFlatSpec with Matchers {
   implicit val cs = IO.contextShift(global)
@@ -90,7 +91,27 @@ class Neo4jTest extends AnyFlatSpec with Matchers {
           _ <- run3
         } yield ()
 
-      }.unsafeRunSync()
+      }
+      .unsafeRunSync()
+
+  }
+
+  it should "print my query" in {
+    import neotypes.implicits.syntax.cypher.neotypesSyntaxCypherStringInterpolator
+    import neotypes.implicits.mappers.all._
+
+    def getTable(entityId: Option[EntityId], depth: Option[Int], skip: Int, limit: Int) = {
+      val filters =
+        List(
+          depth.map(d => c"depth: $d"),
+          entityId.map(d => c"entityId: ${d.value}")
+        ).flatten.reduceOption(_ + c", " + _).map(c"{" + _ + c"}").getOrElse(c"")
+
+      (c"match (j:Entity) -[r:coexists]->(e:Entity" + filters + c") return j.jobId as startJobId,j.entityValue as startValue,e.entityId,e.entityValue,r.counter skip $skip limit $limit")
+        .query[TableRow]
+    }
+
+    println(getTable(None, None, 0, 10).query)
 
   }
 
