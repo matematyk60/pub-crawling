@@ -67,14 +67,18 @@ class Neo4jNodeRepository(session: Session[IO]) {
 
     val targetFilters =
       List(
-        depth.map(d => c"jobDepth: $d"),
         entityId.map(d => c"entityId: ${d.value}")
+      ).flatten.reduceOption(_ + c", " + _).map(c"{" + _ + c"}").getOrElse(c"")
+
+    val srcTest =
+      List(
+        depth.map(d => c"jobDepth: $d")
       ).flatten.reduceOption(_ + c", " + _).map(c"{" + _ + c"}").getOrElse(c"")
 
     val sourceFilters =
       jobIds.filter(_.nonEmpty).map(ids => c"where j.jobId IN ${ids.map(_.value)}").getOrElse(c"")
 
-    (c"match (j:Entity) -[r:coexists]->(e:Entity" + targetFilters + c")" + sourceFilters + c""" return
+    (c"match (j:Entity" + srcTest + c") -[r:coexists]->(e:Entity" + targetFilters + c")" + sourceFilters + c""" return
             j.jobId             as startJobId,
             j.entityValue       as startEntityValue,
             e.entityId          as foundEntityId,
