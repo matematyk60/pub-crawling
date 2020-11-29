@@ -14,10 +14,6 @@ import com.guys.coding.hackathon.backend.infrastructure.postgres.DoobieRequestRe
 import com.guys.coding.hackathon.backend.infrastructure.neo4j.Neo4jNodeRepository.TableRow
 
 object ExampleTypes {
-  case class ExampleInput(id: String, value: String)
-  implicit val ExampleInputType: InputType[ExampleInput] =
-    deriveInputObjectType[ExampleInput]()
-
   implicit val ZonedScalar =
     ScalarAlias[ZonedDateTime, Long](LongType, TimeUtils.zonedDateTimeToMillis(_), (TimeUtils.millisToZonedDateTime _).andThen(Right(_)))
 
