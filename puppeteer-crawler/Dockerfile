@@ -9,5 +9,6 @@ COPY ./package.json package.json
 COPY ./node_modules node_modules/
 COPY ./*.js ./
 COPY ./*.proto ./
+COPY ./compiled ./compiled
 
 CMD ["yarn",  "start"]

@@ -24,13 +24,14 @@ protobuf.load(protoPath, function (err, root) {
   const consumer = new kafka.Consumer(
     kafkaClient,
     [
-      { topic: requestTopic, partition: 0 },
-      { topic: requestTopic, partition: 1 },
-      { topic: requestTopic, partition: 2 },
-      { topic: requestTopic, partition: 3 },
+      Array.from(Array(16).keys()).map((i) => ({
+        topic: requestTopic,
+        partition: i,
+      })),
     ],
     {
       autoCommit: true,
+      groupId: "puppeteer-crwler",
       encoding: "buffer",
     }
   );
@@ -95,7 +96,7 @@ protobuf.load(protoPath, function (err, root) {
 
           success.setRequestid(request.crawl.requestId);
           success.setUrlsList(links);
-          success.setFoundentitiesList(matches);
+          success.setFoundentitisList(matches);
 
           response.setSuccess(success);
 
