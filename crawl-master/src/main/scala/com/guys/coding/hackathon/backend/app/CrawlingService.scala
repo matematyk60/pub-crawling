@@ -140,6 +140,8 @@ object CrawlingService {
                            EntityValue(enitiyValue)
                          )
 
+                     _ <- RedisConfigRepository[F].saveJobSelectedDomains(jobId, selectedDomains)
+
                      _ <- DoobieJobRepository[F].createJob(job)
 
                      urls = List(googleUrls(phrases, selectedDomains), duckDuckGoUrls(phrases, selectedDomains)).flatten
