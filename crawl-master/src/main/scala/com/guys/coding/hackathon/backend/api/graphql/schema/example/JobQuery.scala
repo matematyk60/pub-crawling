@@ -51,8 +51,8 @@ class JobQuery(neo4jRepo: Neo4jNodeRepository, tx: Transactor[IO]) extends Query
         Field(
           "entityTable",
           ListType(TableRowType),
-          arguments = List(EntityIdArg, DepthArg, OffsetArg, LimitArg),
-          resolve = ctx => // ctx.ctx.authorizedF { _ =>
+          arguments = List(EntityIdArg, DepthArg, OffsetArg, LimitArg), // TODO:bcm  add parentJobId filter. Should be a list ideally
+          resolve = ctx =>                                              // ctx.ctx.authorizedF { _ =>
           {
 
             neo4jRepo

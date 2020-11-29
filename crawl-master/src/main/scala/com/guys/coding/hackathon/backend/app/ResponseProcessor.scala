@@ -6,7 +6,7 @@ import cats.effect.Concurrent
 import com.guys.coding.hackathon.backend.domain.{JobId, RequestId}
 import com.guys.coding.hackathon.backend.infrastructure.kafka.{KafkaRequestService, KafkaResponseSource}
 import com.guys.coding.hackathon.backend.infrastructure.postgres.{DoobieJobRepository, DoobieRequestRepository}
-import com.guys.coding.hackathon.proto.notifcation.{Crawl, CrawlFailure, CrawlSuccess, Query, Request, Response}
+import com.guys.coding.hackathon.proto.notifcation.{Crawl, CrawlFailure, CrawlSuccess, EntityMatch, Query, Request, Response}
 import cats.syntax.functor.toFunctorOps
 import cats.syntax.flatMap.toFlatMapOps
 import cats.syntax.apply.catsSyntaxApply
@@ -45,7 +45,11 @@ object ResponseProcessor {
                                urls.toList.traverse(url => CrawlebUrlsRepository[F].isVisited(url).map(url -> _)).map(_.filterNot(_._2).map(_._1))
                              )
 
-              _ <- OptionT.liftF(EntityService[F].saveReturning(job.id, entries = foundEntities, urls = urls))
+              replacedFoundEntities = foundEntities.map {
+                case e @ EntityMatch("phoneNumber", _, _, _) => e.copy(value = e.value.filter(_.isDigit))
+                case e => e
+              }
+              _ <- OptionT.liftF(EntityService[F].saveReturning(job.id, entries = replacedFoundEntities, urls = urls))
 
               _ <- OptionT.liftF(
                     if (request.depth == job.iterations) Applicative[F].unit
